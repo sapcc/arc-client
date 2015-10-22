@@ -3,6 +3,7 @@ require 'rest-client'
 require 'uri'
 require 'ostruct'
 require 'yaml'
+require 'json'
 
 module Arc
 
@@ -70,6 +71,27 @@ module Arc
     end
 
     def delete_agent(token, agent_id)
+      response = remove_agent(token, agent_id)
+      if response.code == 200
+        return true
+      else
+        return false
+      end
+    rescue => e
+      $stderr.puts "Ruby-Arc-Client: caught exception deleting an agent: #{e}"
+      return false
+    end
+
+    def delete_agent!(token, agent_id)
+      if token == nil || token == '' || agent_id == nil || agent_id == ''
+        raise ArgumentError, "Ruby-Arc-Client: caught exception deleting an agent. Parameter token or agent_id nil or empty"
+      end
+      response = remove_agent(token, agent_id)
+      if response.code == 200
+        return true
+      else
+        return false
+      end
     end
 
     #
@@ -113,28 +135,58 @@ module Arc
 
     def find_job_log!(token, job_id)
       if token == nil || token == '' || job_id == nil || job_id == ''
-        raise ArgumentError, "Ruby-Arc-Client: caught exception finding a job. Parameter token or job_id nil or empty"
+        raise ArgumentError, "Ruby-Arc-Client: caught exception finding a job log. Parameter token or job_id nil or empty"
       end
       get_job_log(token, job_id)
     end
 
-    def execute_job()
+    def execute_job(token, options)
+      response = run_job(token, options)
+      if response.nil?
+        ""
+      else
+        response['request_id']
+      end
+    rescue => e
+      $stderr.puts "Ruby-Arc-Client: caught exception executing a job: #{e}"
+      return ""
+    end
+
+    def execute_job!(token, options)
+      if token == nil || token == ''
+        raise ArgumentError, "Ruby-Arc-Client: caught exception executing a job. Parameter token nil or empty"
+      end
+      response = run_job(token, options)
+      if response.nil?
+        ""
+      else
+        response['request_id']
+      end
     end
 
     private
 
+    def run_job(token, options)
+      response = api_request('post', URI::join(@api_server_url, 'jobs').to_s, token, options.to_json)
+      YAML.load(response)
+    end
+
+    def remove_agent(token, agent_id)
+      api_request('delete', URI::join(@api_server_url, 'agents/', agent_id).to_s, token, "")
+    end
+
     def get_job_log(token, job_id)
-      api_request('get', URI::join(@api_server_url, 'jobs/', job_id + '/', 'log').to_s, token)
+      api_request('get', URI::join(@api_server_url, 'jobs/', job_id + '/', 'log').to_s, token, "")
     end
 
     def get_job(token, job_id)
-      response = api_request('get', URI::join(@api_server_url, 'jobs/', job_id).to_s, token)
+      response = api_request('get', URI::join(@api_server_url, 'jobs/', job_id).to_s, token, "")
       Job.new(YAML.load(response))
     end
 
     def get_all_jobs(token)
       jobs = []
-      response = api_request('get', URI::join(@api_server_url, 'jobs').to_s, token)
+      response = api_request('get', URI::join(@api_server_url, 'jobs').to_s, token, "")
       hash_response = YAML.load(response)
       hash_response.each do |job|
         jobs << Job.new(job)
@@ -143,13 +195,13 @@ module Arc
     end
 
     def get_all_facts(token, agent_id)
-      response = api_request('get', URI::join(@api_server_url, 'agents/', agent_id + '/', "facts").to_s, token)
+      response = api_request('get', URI::join(@api_server_url, 'agents/', agent_id + '/', "facts").to_s, token, "")
       Facts.new(YAML.load(response))
     end
 
     def get_all_agents(token)
       agents = []
-      response = api_request('get', URI::join(@api_server_url, 'agents').to_s, token)
+      response = api_request('get', URI::join(@api_server_url, 'agents').to_s, token, "")
       hash_response = YAML.load(response)
       hash_response.each do |agent|
         agents << Agent.new(agent)
@@ -158,15 +210,16 @@ module Arc
     end
 
     def get_agent(token, agent_id)
-      response = api_request('get', URI::join(@api_server_url, 'agents/', agent_id).to_s, token)
+      response = api_request('get', URI::join(@api_server_url, 'agents/', agent_id).to_s, token, "")
       Agent.new(YAML.load(response))
     end
 
-    def api_request(method, uri, token)
+    def api_request(method, uri, token, payload)
       RestClient::Request.new(method: method.to_sym,
                               url: uri,
                               headers: {'X-Auth-Token': token},
-                              timeout: @timeout).execute
+                              timeout: @timeout,
+                              payload: payload).execute
     end
 
     def api_base_url(url)

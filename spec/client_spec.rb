@@ -142,6 +142,39 @@ describe Arc do
 
     end
 
+    context "delete_agent" do
+
+      it "should return true" do
+        response = double("response", :code => 200)
+        expect(@client).to receive(:remove_agent).with(token, "some_existing_agent_id").and_return(response)
+        deleted = @client.delete_agent(token, "some_existing_agent_id")
+        expect(deleted).to be == true
+      end
+
+      it "should rescue errors and return false" do
+        deleted = @client.delete_agent(token, "some_non_exisiting_agent_id")
+        expect(deleted).to be == false
+      end
+
+    end
+
+    context "delete_agent!" do
+
+      it "should return true" do
+        response = double("response", :code => 200)
+        expect(@client).to receive(:remove_agent).with(token, "some_existing_agent_id").and_return(response)
+        deleted = @client.delete_agent!(token, "some_existing_agent_id")
+        expect(deleted).to be == true
+      end
+
+      it "should rescue errors" do
+        expect { @client.delete_agent!(token, "some_non_exisiting_agent_id") }.to raise_error { |error|
+                                                                                  expect(error).to be_a(RestClient::ResourceNotFound)
+                                                                                }
+      end
+
+    end
+
   end
 
   describe "Jobs" do
@@ -171,7 +204,7 @@ describe Arc do
         expect(jobs.count).to be > 0
       end
 
-      it "should rescue errors and return empty array" do
+      it "should not rescue errors" do
         expect { @client.list_jobs!("some_not_valid_token") }.to raise_error { |error|
                                                                    expect(error).to be_a(RestClient::Unauthorized)
                                                                  }
@@ -183,7 +216,7 @@ describe Arc do
 
       it "should return a job" do
         jobs = @client.list_jobs(token)
-        job = @client.find_job(token, jobs[0].request['request_id'])
+        job = @client.find_job(token, jobs[0].request_id)
         expect(job).to_not be_nil
       end
 
@@ -198,11 +231,11 @@ describe Arc do
 
       it "should return a job" do
         jobs = @client.list_jobs(token)
-        job = @client.find_job!(token, jobs[0].request['request_id'])
+        job = @client.find_job!(token, jobs[0].request_id)
         expect(job).to_not be_nil
       end
 
-      it "should rescue errors and return nil" do
+      it "should not rescue errors" do
         expect { @client.find_job!(token, "some_not_existing_id") }.to raise_error { |error|
                                                                            expect(error).to be_a(RestClient::ResourceNotFound)
                                                                          }
@@ -212,13 +245,13 @@ describe Arc do
 
     context "fin_job_log" do
 
-      it "should return a job" do
+      it "should return a job log" do
         jobs = @client.list_jobs(token)
-        log = @client.find_job_log(token, jobs[0].request['request_id'])
+        log = @client.find_job_log(token, jobs[0].request_id)
         expect(log).to_not be_nil
       end
 
-      it "should rescue errors and return nil" do
+      it "should rescue errors and return empty string" do
         log = @client.find_job_log(token, "some_not_existing_id")
         expect(log).to be == ""
       end
@@ -227,16 +260,51 @@ describe Arc do
 
     context "fin_job_log!" do
 
-      it "should return a job" do
+      it "should return a job log" do
         jobs = @client.list_jobs(token)
-        log = @client.find_job_log!(token, jobs[0].request['request_id'])
+        log = @client.find_job_log!(token, jobs[0].request_id)
         expect(log).to_not be_nil
       end
 
-      it "should rescue errors and return nil" do
+      it "should not rescue errors" do
         expect { @client.find_job_log!(token, "some_not_existing_id") }.to raise_error { |error|
                                                                          expect(error).to be_a(RestClient::ResourceNotFound)
                                                                        }
+      end
+
+    end
+
+    context "execute_job" do
+
+      it "should execute a job" do
+        agents = @client.list_agents(token)
+        options = {to: agents[0].agent_id, timeout: 15, agent: "execute", action: "script", payload: "echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\"" }
+        job_id = @client.execute_job(token, options)
+        expect(job_id.empty?).to be == false
+      end
+
+      it "should rescue errors and return empty string" do
+        options = {to: "non_existing_agent_id", timeout: 15, agent: "execute", action: "script", payload: "echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\"" }
+        job_id = @client.execute_job(token, options)
+        expect(job_id.empty?).to be == true
+      end
+
+    end
+
+    context "execute_job!" do
+
+      it "should execute a job" do
+        agents = @client.list_agents(token)
+        options = {to: agents[0].agent_id, timeout: 15, agent: "execute", action: "script", payload: "echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\"" }
+        job_id = @client.execute_job!(token, options)
+        expect(job_id.empty?).to be == false
+      end
+
+      it "should rescue errors and return empty string" do
+        options = {to: "non_existing_agent_id", timeout: 15, agent: "execute", action: "script", payload: "echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\"" }
+        expect { @client.execute_job!(token, options) }.to raise_error { |error|
+                                                                             expect(error).to be_a(RestClient::ResourceNotFound)
+                                                                           }
       end
 
     end
