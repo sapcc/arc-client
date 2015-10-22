@@ -210,6 +210,37 @@ describe Arc do
 
     end
 
+    context "fin_job_log" do
+
+      it "should return a job" do
+        jobs = @client.list_jobs(token)
+        log = @client.find_job_log(token, jobs[0].request['request_id'])
+        expect(log).to_not be_nil
+      end
+
+      it "should rescue errors and return nil" do
+        log = @client.find_job_log(token, "some_not_existing_id")
+        expect(log).to be == ""
+      end
+
+    end
+
+    context "fin_job_log!" do
+
+      it "should return a job" do
+        jobs = @client.list_jobs(token)
+        log = @client.find_job_log!(token, jobs[0].request['request_id'])
+        expect(log).to_not be_nil
+      end
+
+      it "should rescue errors and return nil" do
+        expect { @client.find_job_log!(token, "some_not_existing_id") }.to raise_error { |error|
+                                                                         expect(error).to be_a(RestClient::ResourceNotFound)
+                                                                       }
+      end
+
+    end
+
   end
 
 end

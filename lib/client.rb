@@ -105,12 +105,27 @@ module Arc
     end
 
     def find_job_log(token, job_id)
+      get_job_log(token, job_id)
+    rescue => e
+      $stderr.puts "Ruby-Arc-Client: caught exception getting a job log: #{e}"
+      return ""
+    end
+
+    def find_job_log!(token, job_id)
+      if token == nil || token == '' || job_id == nil || job_id == ''
+        raise ArgumentError, "Ruby-Arc-Client: caught exception finding a job. Parameter token or job_id nil or empty"
+      end
+      get_job_log(token, job_id)
     end
 
     def execute_job()
     end
 
     private
+
+    def get_job_log(token, job_id)
+      api_request('get', URI::join(@api_server_url, 'jobs/', job_id + '/', 'log').to_s, token)
+    end
 
     def get_job(token, job_id)
       response = api_request('get', URI::join(@api_server_url, 'jobs/', job_id).to_s, token)
