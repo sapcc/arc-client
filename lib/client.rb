@@ -80,22 +80,42 @@ module Arc
       get_all_jobs(token)
     rescue => e
       $stderr.puts "Ruby-Arc-Client: caught exception listing jobs: #{e}"
-      return nil
+      return []
     end
 
     def list_jobs!(token)
+      if token == nil || token == ''
+        raise ArgumentError, "Ruby-Arc-Client: caught exception listing jobs. Token parameter not valid"
+      end
+      get_all_agents(token)
     end
 
     def find_job(token, job_id)
+      get_job(token, job_id)
+    rescue => e
+      $stderr.puts "Ruby-Arc-Client: caught exception finding a job: #{e}"
+      return nil
+    end
+
+    def find_job!(token, job_id)
+      if token == nil || token == '' || job_id == nil || job_id == ''
+        raise ArgumentError, "Ruby-Arc-Client: caught exception finding a job. Parameter token or job_id nil or empty"
+      end
+      get_job(token, job_id)
+    end
+
+    def find_job_log(token, job_id)
     end
 
     def execute_job()
     end
 
-    def find_job_log()
-    end
-
     private
+
+    def get_job(token, job_id)
+      response = api_request('get', URI::join(@api_server_url, 'jobs/', job_id).to_s, token)
+      Job.new(YAML.load(response))
+    end
 
     def get_all_jobs(token)
       jobs = []

@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Arc do
-  let(:token) { ENV['ARC_AUTH_TOKEN']  }
+  let(:token) { ENV['ARC_AUTH_TOKEN'] }
   let(:api_server_url) { 'https://arc-app' }
 
   it 'has a version number' do
@@ -74,8 +74,8 @@ describe Arc do
 
       it "should not rescue errors" do
         expect { @client.list_agents!("some_not_valid_token") }.to raise_error { |error|
-                                                                           expect(error).to be_a(RestClient::Unauthorized)
-                                                                         }
+                                                                     expect(error).to be_a(RestClient::Unauthorized)
+                                                                   }
       end
 
     end
@@ -105,9 +105,8 @@ describe Arc do
 
       it "should not rescue errors" do
         expect { @client.find_agent!(token, "some_not_existing_id") }.to raise_error { |error|
-                                                                 expect(error).to be_a(RestClient::ResourceNotFound)
-                                                               }
-
+                                                                           expect(error).to be_a(RestClient::ResourceNotFound)
+                                                                         }
       end
 
     end
@@ -137,8 +136,8 @@ describe Arc do
 
       it "should rescue errors and return nil" do
         expect { @client.list_agent_facts!(token, "some_non_exisiting_id") }.to raise_error { |error|
-                                                                           expect(error).to be_a(RestClient::ResourceNotFound)
-                                                                         }
+                                                                                  expect(error).to be_a(RestClient::ResourceNotFound)
+                                                                                }
       end
 
     end
@@ -159,12 +158,57 @@ describe Arc do
       end
 
       it "should rescue errors and return empty array" do
-        jobs = @client.list_agents("some_not_valid_token")
+        jobs = @client.list_jobs("some_not_valid_token")
         expect(jobs.count).to be == 0
       end
 
     end
 
+    context "list_jobs!" do
+
+      it "should return all jobs" do
+        jobs = @client.list_jobs!(token)
+        expect(jobs.count).to be > 0
+      end
+
+      it "should rescue errors and return empty array" do
+        expect { @client.list_jobs!("some_not_valid_token") }.to raise_error { |error|
+                                                                   expect(error).to be_a(RestClient::Unauthorized)
+                                                                 }
+      end
+
+    end
+
+    context "fin_job" do
+
+      it "should return a job" do
+        jobs = @client.list_jobs(token)
+        job = @client.find_job(token, jobs[0].request['request_id'])
+        expect(job).to_not be_nil
+      end
+
+      it "should rescue errors and return nil" do
+        job = @client.find_job(token, "some_not_existing_id")
+        expect(job).to be_nil
+      end
+
+    end
+
+    context "fin_job!" do
+
+      it "should return a job" do
+        jobs = @client.list_jobs(token)
+        job = @client.find_job!(token, jobs[0].request['request_id'])
+        expect(job).to_not be_nil
+      end
+
+      it "should rescue errors and return nil" do
+        expect { @client.find_job!(token, "some_not_existing_id") }.to raise_error { |error|
+                                                                           expect(error).to be_a(RestClient::ResourceNotFound)
+                                                                         }
+      end
+
+    end
 
   end
 
