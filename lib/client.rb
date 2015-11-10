@@ -28,32 +28,32 @@ module Arc
     # Agents
     #
 
-    def list_agents(token)
-      get_all_agents(token)
+    def list_agents(token, filter = "", show_facts = [])
+      get_all_agents(token, filter, show_facts)
     rescue => e
       $stderr.puts "Ruby-Arc-Client: caught exception listing agents: #{e}"
       return []
     end
 
-    def list_agents!(token)
+    def list_agents!(token, filter = "", show_facts = [])
       if token == nil || token == ''
         raise ArgumentError, "Ruby-Arc-Client: caught exception listing agents. Token parameter not valid"
       end
-      get_all_agents(token)
+      get_all_agents(token, filter, show_facts)
     end
 
-    def find_agent(token, agent_id)
-      get_agent(token, agent_id)
+    def find_agent(token, agent_id, show_facts = [])
+      get_agent(token, agent_id, show_facts)
     rescue => e
       $stderr.puts "Ruby-Arc-Client: caught exception finding an agent: #{e}"
       return nil
     end
 
-    def find_agent!(token, agent_id)
+    def find_agent!(token, agent_id, show_facts = [])
       if token == nil || token == '' || agent_id == nil || agent_id == ''
         raise ArgumentError, "Ruby-Arc-Client: caught exception finding an agent. Parameter token or agent_id nil or empty"
       end
-      get_agent(token, agent_id)
+      get_agent(token, agent_id, show_facts)
     end
 
     def list_agent_facts(token, agent_id)
@@ -109,7 +109,7 @@ module Arc
       if token == nil || token == ''
         raise ArgumentError, "Ruby-Arc-Client: caught exception listing jobs. Token parameter not valid"
       end
-      get_all_agents(token)
+      get_all_jobs(token)
     end
 
     def find_job(token, job_id)
@@ -199,19 +199,32 @@ module Arc
       Facts.new(YAML.load(response))
     end
 
-    def get_all_agents(token)
+    def get_all_agents(token, filter, facts)
       agents = []
-      response = api_request('get', URI::join(@api_server_url, 'agents').to_s, token, "")
+
+      parameters = build_parameters_uri(filter, facts)
+
+      response = api_request('get', URI::join(@api_server_url, 'agents', parameters).to_s, token, "")
       hash_response = YAML.load(response)
       hash_response.each do |agent|
-        agents << Agent.new(agent)
+        agent = Agent.new(agent)
+        # convert facts json to facts model
+        if !agent.facts.nil?
+          agent.facts = Facts.new(YAML.load(agent.facts.to_json))
+        end
+        agents << agent
       end
       agents
     end
 
-    def get_agent(token, agent_id)
-      response = api_request('get', URI::join(@api_server_url, 'agents/', agent_id).to_s, token, "")
-      Agent.new(YAML.load(response))
+    def get_agent(token, agent_id, show_facts)
+      parameter = build_parameters_uri("", show_facts)
+      response = api_request('get', URI::join(@api_server_url, 'agents/', agent_id, parameter).to_s, token, "")
+      agent = Agent.new(YAML.load(response))
+      if !agent.facts.nil?
+        agent.facts = Facts.new(YAML.load(agent.facts.to_json))
+      end
+      return agent
     end
 
     def api_request(method, uri, token, payload)
@@ -220,6 +233,24 @@ module Arc
                               headers: {'X-Auth-Token': token},
                               timeout: @timeout,
                               payload: payload).execute
+    end
+
+    def build_parameters_uri(filter, facts)
+      parameters = ""
+      if !filter.empty?
+        parameters = '?q='+ filter
+      end
+
+      if facts.count() != 0
+        if !filter.empty?
+          parameters += '&'
+        else
+          parameters += '?'
+        end
+        parameters += 'facts=' + facts.join(',')
+      end
+
+      return URI.encode(parameters)
     end
 
     def api_base_url(url)

@@ -58,6 +58,15 @@ describe Arc do
         expect(agents.count).to be > 0
       end
 
+      it "should return agents filtered by os and return os fact" do
+        agents = @client.list_agents(token, 'os="linux" AND online="true"', ['os','online'])
+        expect(agents.count).to be > 0
+        agents.each do |agent|
+          expect(agent.facts.os).to be == 'linux'
+          expect(agent.facts.online).to be == true
+        end
+      end
+
       it "should rescue errors and return empty array" do
         agents = @client.list_agents("some_not_valid_token")
         expect(agents.count).to be == 0
@@ -78,6 +87,14 @@ describe Arc do
                                                                    }
       end
 
+      it "should return agents filtered by os and return os fact" do
+        agents = @client.list_agents!(token, 'os="linux"', ['os'])
+        expect(agents.count).to be > 0
+        agents.each do |agent|
+          expect(agent.facts.os).to be == 'linux'
+        end
+      end
+
     end
 
     context "find_agent" do
@@ -86,6 +103,14 @@ describe Arc do
         agents = @client.list_agents(token)
         agent = @client.find_agent(token, agents[0].agent_id)
         expect(agent).to_not be_nil
+      end
+
+      it "should return an agent with facts" do
+        agents = @client.list_agents(token)
+        agent = @client.find_agent(token, agents[0].agent_id, ['os', 'online'])
+        expect(agent).to_not be_nil
+        expect(agent.facts.os.empty?).to be == false
+        expect(agent.facts.online).to be == true
       end
 
       it "should rescue errors and return nil" do
@@ -101,6 +126,14 @@ describe Arc do
         agents = @client.list_agents(token)
         agent = @client.find_agent!(token, agents[0].agent_id)
         expect(agent).to_not be_nil
+      end
+
+      it "should return an agent with facts" do
+        agents = @client.list_agents(token)
+        agent = @client.find_agent!(token, agents[0].agent_id, ['os', 'online'])
+        expect(agent).to_not be_nil
+        expect(agent.facts.os.empty?).to be == false
+        expect(agent.facts.online).to be == true
       end
 
       it "should not rescue errors" do
