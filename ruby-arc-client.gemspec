@@ -4,14 +4,14 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'ruby-arc-client/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "ruby-arc-client-ruby-arc-client-client"
+  spec.name          = "ruby-arc-client"
   spec.version       = Arc::VERSION
   spec.authors       = ["Arturo Reuschenbach Puncernau"]
   spec.email         = ["a.reuschenbach.puncernau@sap.com"]
 
-  spec.summary       = %q{TODO: Write a short summary, because Rubygems requires one.}
-  spec.description   = %q{TODO: Write a longer description or delete this line.}
-  spec.homepage      = "TODO: Put your gem's website or public repo URL here."
+  spec.summary       = %q{Ruby client to use the Arc API}
+  spec.description   = %q{Ruby client to use the Arc API}
+  spec.homepage      = "https://github.com/pages/monsoon/arc/"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or
