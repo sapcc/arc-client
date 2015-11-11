@@ -1,11 +1,11 @@
-require "ruby-arc-client/version"
+require "ruby_arc_client/version"
 require 'rest-client'
 require 'uri'
 require 'ostruct'
 require 'yaml'
 require 'json'
 
-module Arc
+module RubyArcClient
 
   class Client
     attr_reader :api_server_url, :timeout

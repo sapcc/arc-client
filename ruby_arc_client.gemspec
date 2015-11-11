@@ -1,11 +1,11 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'ruby-arc-client/version'
+require 'ruby_arc_client/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "ruby-arc-client"
-  spec.version       = Arc::VERSION
+  spec.version       = RubyArcClient::VERSION
   spec.authors       = ["Arturo Reuschenbach Puncernau"]
   spec.email         = ["a.reuschenbach.puncernau@sap.com"]
 

@@ -1,4 +1,4 @@
 source 'https://rubygems.org'
 
-# Specify your gem's dependencies in ruby-arc-client-ruby-arc-client-client.gemspec
+# Specify your gem's dependencies in ruby_arc_client-ruby_arc_client-client.gemspec
 gemspec

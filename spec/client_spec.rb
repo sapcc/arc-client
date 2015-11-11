@@ -11,36 +11,36 @@ describe Arc do
   context "creating" do
 
     it 'should raise an argument error with a no valid url' do
-      expect { client = Arc::Client.new(nil) }.to raise_error { |error|
+      expect { client = RubyArcClient::Client.new(nil) }.to raise_error { |error|
                                                     expect(error).to be_a(ArgumentError)
                                                   }
 
-      expect { client = Arc::Client.new("") }.to raise_error { |error|
+      expect { client = RubyArcClient::Client.new("") }.to raise_error { |error|
                                                    expect(error).to be_a(ArgumentError)
                                                  }
 
-      expect { client = Arc::Client.new("no valid url") }.to raise_error { |error|
+      expect { client = RubyArcClient::Client.new("no valid url") }.to raise_error { |error|
                                                                expect(error).to be_a(ArgumentError)
                                                              }
     end
 
     it 'should create base url' do
-      client = Arc::Client.new("https://arc-app/miau/wau/bip")
+      client = RubyArcClient::Client.new("https://arc-app/miau/wau/bip")
       expect(client.api_server_url).to be == "https://arc-app/api/v1/"
     end
 
     it 'should set the default timeout' do
-      client = Arc::Client.new(api_server_url, nil)
+      client = RubyArcClient::Client.new(api_server_url, nil)
       expect(client.timeout).to be == 10
     end
 
     it 'should save the given timeout' do
-      client = Arc::Client.new(api_server_url, 50)
+      client = RubyArcClient::Client.new(api_server_url, 50)
       expect(client.timeout).to be == 50
     end
 
     it 'should return an instance' do
-      expect { client = Arc::Client.new(api_server_url) }.to_not raise_error
+      expect { client = RubyArcClient::Client.new(api_server_url) }.to_not raise_error
     end
 
   end
@@ -48,7 +48,7 @@ describe Arc do
   describe "Agents" do
 
     before(:each) do
-      @client = Arc::Client.new(api_server_url)
+      @client = RubyArcClient::Client.new(api_server_url)
     end
 
     context "list_agents" do
@@ -213,7 +213,7 @@ describe Arc do
   describe "Jobs" do
 
     before(:each) do
-      @client = Arc::Client.new(api_server_url)
+      @client = RubyArcClient::Client.new(api_server_url)
     end
 
     context "list_jobs" do
