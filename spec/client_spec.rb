@@ -1,11 +1,11 @@
 require 'spec_helper'
 
-describe Arc do
+describe RubyArcClient do
   let(:token) { ENV['ARC_AUTH_TOKEN'] }
   let(:api_server_url) { 'https://arc-app' }
 
   it 'has a version number' do
-    expect(Arc::VERSION).not_to be nil
+    expect(RubyArcClient::VERSION).not_to be nil
   end
 
   context "creating" do
@@ -55,21 +55,27 @@ describe Arc do
 
       it "should return all agents" do
         agents = @client.list_agents(token)
-        expect(agents.count).to be > 0
+        expect(agents.data.count).to be > 0
       end
 
-      it "should return agents filtered by os and return os fact" do
-        agents = @client.list_agents(token, 'os="linux" AND online="true"', ['os','online'])
-        expect(agents.count).to be > 0
-        agents.each do |agent|
+      it "should return agents filtered by os and online and return os fact" do
+        agents = @client.list_agents(token, '@os="linux"', ['os'])
+        expect(agents.data.count).to be > 0
+        agents.data.each do |agent|
           expect(agent.facts.os).to be == 'linux'
-          expect(agent.facts.online).to be == true
         end
       end
 
       it "should rescue errors and return empty array" do
         agents = @client.list_agents("some_not_valid_token")
-        expect(agents.count).to be == 0
+        expect(agents.data.count).to be == 0
+      end
+
+      it "should paginate" do
+        agents = @client.list_agents(token, '', [], 1, 1)
+        expect(agents.data.count).to be == 1
+        expect(agents.pagination.total_elements).to be > 1
+        expect(agents.pagination.total_pages).to be > 1
       end
 
     end
@@ -78,7 +84,7 @@ describe Arc do
 
       it "should return all agents" do
         agents = @client.list_agents!(token)
-        expect(agents.count).to be > 0
+        expect(agents.data.count).to be > 0
       end
 
       it "should not rescue errors" do
@@ -88,11 +94,18 @@ describe Arc do
       end
 
       it "should return agents filtered by os and return os fact" do
-        agents = @client.list_agents!(token, 'os="linux"', ['os'])
-        expect(agents.count).to be > 0
-        agents.each do |agent|
+        agents = @client.list_agents!(token, '@os="linux"', ['os'])
+        expect(agents.data.count).to be > 0
+        agents.data.each do |agent|
           expect(agent.facts.os).to be == 'linux'
         end
+      end
+
+      it "should paginate" do
+        agents = @client.list_agents!(token, '', [], 1, 1)
+        expect(agents.data.count).to be == 1
+        expect(agents.pagination.total_elements).to be > 1
+        expect(agents.pagination.total_pages).to be > 1
       end
 
     end
@@ -101,15 +114,15 @@ describe Arc do
 
       it "should return an agent" do
         agents = @client.list_agents(token)
-        agent = @client.find_agent(token, agents[0].agent_id)
+        agent = @client.find_agent(token, agents.data[0].agent_id)
         expect(agent).to_not be_nil
       end
 
       it "should return an agent with facts" do
         agents = @client.list_agents(token)
-        agent = @client.find_agent(token, agents[0].agent_id, ['os', 'online'])
+        agent = @client.find_agent(token, agents.data[0].agent_id, ['platform', 'online'])
         expect(agent).to_not be_nil
-        expect(agent.facts.os.empty?).to be == false
+        expect(agent.facts.platform.empty?).to be == false
         expect(agent.facts.online).to be == true
       end
 
@@ -124,15 +137,15 @@ describe Arc do
 
       it "should return an agent" do
         agents = @client.list_agents(token)
-        agent = @client.find_agent!(token, agents[0].agent_id)
+        agent = @client.find_agent!(token, agents.data[0].agent_id)
         expect(agent).to_not be_nil
       end
 
       it "should return an agent with facts" do
         agents = @client.list_agents(token)
-        agent = @client.find_agent!(token, agents[0].agent_id, ['os', 'online'])
+        agent = @client.find_agent!(token, agents.data[0].agent_id, ['platform', 'online'])
         expect(agent).to_not be_nil
-        expect(agent.facts.os.empty?).to be == false
+        expect(agent.facts.platform.empty?).to be == false
         expect(agent.facts.online).to be == true
       end
 
@@ -148,12 +161,12 @@ describe Arc do
 
       it "should return the facts" do
         agents = @client.list_agents(token)
-        facts = @client.list_agent_facts(token, agents[0].agent_id)
+        facts = @client.show_agent_facts(token, agents.data[0].agent_id)
         expect(facts).to_not be_nil
       end
 
       it "should rescue errors and return nil" do
-        facts = @client.list_agent_facts(token, "some_non_exisiting_id")
+        facts = @client.show_agent_facts(token, "some_non_exisiting_id")
         expect(facts).to be_nil
       end
 
@@ -163,12 +176,12 @@ describe Arc do
 
       it "should return the facts" do
         agents = @client.list_agents(token)
-        facts = @client.list_agent_facts!(token, agents[0].agent_id)
+        facts = @client.show_agent_facts!(token, agents.data[0].agent_id)
         expect(facts).to_not be_nil
       end
 
       it "should rescue errors and return nil" do
-        expect { @client.list_agent_facts!(token, "some_non_exisiting_id") }.to raise_error { |error|
+        expect { @client.show_agent_facts!(token, "some_non_exisiting_id") }.to raise_error { |error|
                                                                                   expect(error).to be_a(RestClient::ResourceNotFound)
                                                                                 }
       end
@@ -220,12 +233,26 @@ describe Arc do
 
       it "should return all jobs" do
         jobs = @client.list_jobs(token)
-        expect(jobs.count).to be > 0
+        expect(jobs.data.count).to be > 0
+      end
+
+      it "should return all jobs filtered by agent_id" do
+        all_jobs = @client.list_jobs(token)
+        jobs = @client.list_jobs(token, "mo-3ee318860")
+        expect(jobs.data.count).to be > 0
+        expect(jobs.data.count).to be < all_jobs.data.count
       end
 
       it "should rescue errors and return empty array" do
         jobs = @client.list_jobs("some_not_valid_token")
-        expect(jobs.count).to be == 0
+        expect(jobs.data.count).to be == 0
+      end
+
+      it "should paginate" do
+        jobs = @client.list_jobs(token, "mo-3ee318860", 1, 1)
+        expect(jobs.data.count).to be == 1
+        expect(jobs.pagination.total_elements).to be > 1
+        expect(jobs.pagination.total_pages).to be > 1
       end
 
     end
@@ -234,7 +261,7 @@ describe Arc do
 
       it "should return all jobs" do
         jobs = @client.list_jobs!(token)
-        expect(jobs.count).to be > 0
+        expect(jobs.data.count).to be > 0
       end
 
       it "should not rescue errors" do
@@ -243,13 +270,20 @@ describe Arc do
                                                                  }
       end
 
+      it "should paginate" do
+        jobs = @client.list_jobs!(token, "mo-3ee318860", 1, 1)
+        expect(jobs.data.count).to be == 1
+        expect(jobs.pagination.total_elements).to be > 1
+        expect(jobs.pagination.total_pages).to be > 1
+      end
+
     end
 
     context "fin_job" do
 
       it "should return a job" do
         jobs = @client.list_jobs(token)
-        job = @client.find_job(token, jobs[0].request_id)
+        job = @client.find_job(token, jobs.data[0].request_id)
         expect(job).to_not be_nil
       end
 
@@ -264,7 +298,7 @@ describe Arc do
 
       it "should return a job" do
         jobs = @client.list_jobs(token)
-        job = @client.find_job!(token, jobs[0].request_id)
+        job = @client.find_job!(token, jobs.data[0].request_id)
         expect(job).to_not be_nil
       end
 
@@ -280,7 +314,7 @@ describe Arc do
 
       it "should return a job log" do
         jobs = @client.list_jobs(token)
-        log = @client.find_job_log(token, jobs[0].request_id)
+        log = @client.find_job_log(token, jobs.data[0].request_id)
         expect(log).to_not be_nil
       end
 
@@ -295,7 +329,7 @@ describe Arc do
 
       it "should return a job log" do
         jobs = @client.list_jobs(token)
-        log = @client.find_job_log!(token, jobs[0].request_id)
+        log = @client.find_job_log!(token, jobs.data[0].request_id)
         expect(log).to_not be_nil
       end
 
@@ -311,7 +345,7 @@ describe Arc do
 
       it "should execute a job" do
         agents = @client.list_agents(token)
-        options = {to: agents[0].agent_id, timeout: 15, agent: "execute", action: "script", payload: "echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\"" }
+        options = {to: agents.data[0].agent_id, timeout: 15, agent: "execute", action: "script", payload: "echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\"" }
         job_id = @client.execute_job(token, options)
         expect(job_id.empty?).to be == false
       end
@@ -328,7 +362,7 @@ describe Arc do
 
       it "should execute a job" do
         agents = @client.list_agents(token)
-        options = {to: agents[0].agent_id, timeout: 15, agent: "execute", action: "script", payload: "echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\"" }
+        options = {to: agents.data[0].agent_id, timeout: 15, agent: "execute", action: "script", payload: "echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\"" }
         job_id = @client.execute_job!(token, options)
         expect(job_id.empty?).to be == false
       end

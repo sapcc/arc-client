@@ -7,6 +7,41 @@ require 'json'
 
 module RubyArcClient
 
+  class Agent < OpenStruct
+  end
+
+  class Agents
+    attr_reader :data, :pagination
+    def initialize(_agents=[], _pagination=nil)
+      @data = _agents
+      @pagination = _pagination
+    end
+  end
+
+  class Facts < OpenStruct
+  end
+
+  class Job < OpenStruct
+  end
+
+  class Jobs
+    attr_reader :data, :pagination
+    def initialize(_jobs=[], _pagination=nil)
+      @data = _jobs
+      @pagination = _pagination
+    end
+  end
+
+  class Pagination
+    attr_reader :total_pages, :total_elements
+
+    def initialize(_total_pages=0, _total_elements=0)
+      @total_pages = _total_pages.to_i
+      @total_elements = _total_elements.to_i
+    end
+
+  end
+
   class Client
     attr_reader :api_server_url, :timeout
 
@@ -28,18 +63,18 @@ module RubyArcClient
     # Agents
     #
 
-    def list_agents(token, filter = "", show_facts = [])
-      get_all_agents(token, filter, show_facts)
+    def list_agents(token, filter = "", show_facts = [], page = 0, per_page = 0)
+      get_all_agents(token, filter, show_facts, page, per_page)
     rescue => e
       $stderr.puts "Ruby-Arc-Client: caught exception listing agents: #{e}"
-      return []
+      return Agents.new()
     end
 
-    def list_agents!(token, filter = "", show_facts = [])
+    def list_agents!(token, filter = "", show_facts = [], page = 0, per_page = 0)
       if token == nil || token == ''
         raise ArgumentError, "Ruby-Arc-Client: caught exception listing agents. Token parameter not valid"
       end
-      get_all_agents(token, filter, show_facts)
+      get_all_agents(token, filter, show_facts, page, per_page)
     end
 
     def find_agent(token, agent_id, show_facts = [])
@@ -56,14 +91,14 @@ module RubyArcClient
       get_agent(token, agent_id, show_facts)
     end
 
-    def list_agent_facts(token, agent_id)
+    def show_agent_facts(token, agent_id)
       get_all_facts(token, agent_id)
     rescue => e
       $stderr.puts "Ruby-Arc-Client: caught exception listing agent facts: #{e}"
       return nil
     end
 
-    def list_agent_facts!(token, agent_id)
+    def show_agent_facts!(token, agent_id)
       if token == nil || token == '' || agent_id == nil || agent_id == ''
         raise ArgumentError, "Ruby-Arc-Client: caught exception listing agent facts. Parameter token or agent_id nil or empty"
       end
@@ -98,18 +133,18 @@ module RubyArcClient
     # Jobs
     #
 
-    def list_jobs(token)
-      get_all_jobs(token)
+    def list_jobs(token, filter_by_agent_id = "", page = 0, per_page = 0)
+      get_all_jobs(token, filter_by_agent_id, page, per_page)
     rescue => e
       $stderr.puts "Ruby-Arc-Client: caught exception listing jobs: #{e}"
-      return []
+      return Jobs.new()
     end
 
-    def list_jobs!(token)
+    def list_jobs!(token, filter_by_agent_id = "", page = 0, per_page = 0)
       if token == nil || token == ''
         raise ArgumentError, "Ruby-Arc-Client: caught exception listing jobs. Token parameter not valid"
       end
-      get_all_jobs(token)
+      get_all_jobs(token, filter_by_agent_id, page, per_page)
     end
 
     def find_job(token, job_id)
@@ -184,14 +219,32 @@ module RubyArcClient
       Job.new(YAML.load(response))
     end
 
-    def get_all_jobs(token)
+    def get_all_jobs(token, filter_by_agent_id, page, per_page)
       jobs = []
-      response = api_request('get', URI::join(@api_server_url, 'jobs').to_s, token, "")
+      url = URI::join(@api_server_url, 'jobs').to_s
+      params = build_jobs_parameters_uri(filter_by_agent_id, page, per_page)
+      if !params.empty?
+        url += params
+      end
+      response = api_request('get', url, token, "")
       hash_response = YAML.load(response)
       hash_response.each do |job|
         jobs << Job.new(job)
       end
-      jobs
+      Jobs.new(jobs, Pagination.new(response.headers[:pagination_pages], response.headers[:pagination_elements]))
+    end
+
+    def build_jobs_parameters_uri(filter_by_agent_id, page, per_page)
+      # set params
+      uri_filter_by_agent_id = filter_by_agent_id.empty? ? '' : "agent_id=#{filter_by_agent_id}"
+      uri_page = page == 0 ? '' : "page=#{page}"
+      uri_per_page = per_page == 0 ? '' : "per_page=#{per_page}"
+
+      # join params
+      params = [uri_filter_by_agent_id, uri_page, uri_per_page].select{|x| x != ''}.join('&')
+      params = '?' + params if !params.empty?
+
+      return URI.encode(params)
     end
 
     def get_all_facts(token, agent_id)
@@ -199,11 +252,9 @@ module RubyArcClient
       Facts.new(YAML.load(response))
     end
 
-    def get_all_agents(token, filter, facts)
+    def get_all_agents(token, filter, facts, page, per_page)
       agents = []
-
-      parameters = build_parameters_uri(filter, facts)
-
+      parameters = build_agents_parameters_uri(filter, facts, page, per_page)
       response = api_request('get', URI::join(@api_server_url, 'agents', parameters).to_s, token, "")
       hash_response = YAML.load(response)
       hash_response.each do |agent|
@@ -215,10 +266,11 @@ module RubyArcClient
         agents << agent
       end
       agents
+      Agents.new(agents, Pagination.new(response.headers[:pagination_pages], response.headers[:pagination_elements]))
     end
 
     def get_agent(token, agent_id, show_facts)
-      parameter = build_parameters_uri("", show_facts)
+      parameter = build_agents_parameters_uri('', show_facts, '', '')
       response = api_request('get', URI::join(@api_server_url, 'agents/', agent_id, parameter).to_s, token, "")
       agent = Agent.new(YAML.load(response))
       if !agent.facts.nil?
@@ -228,29 +280,25 @@ module RubyArcClient
     end
 
     def api_request(method, uri, token, payload)
-      RestClient::Request.new(method: method.to_sym,
-                              url: uri,
-                              headers: {'X-Auth-Token': token},
-                              timeout: @timeout,
-                              payload: payload).execute
+      RestClient::Request.execute(method: method.to_sym,
+                                  url: uri,
+                                  headers: {'X-Auth-Token': token},
+                                  timeout: @timeout,
+                                  payload: payload)
     end
 
-    def build_parameters_uri(filter, facts)
-      parameters = ""
-      if !filter.empty?
-        parameters = '?q='+ filter
-      end
+    def build_agents_parameters_uri(filter, facts, page, per_page)
+      # set params
+      uri_page = page == 0 ? '' : "page=#{page}"
+      uri_per_page = per_page == 0 ? '' : "per_page=#{per_page}"
+      uri_filter = filter.empty? ? '' : "q=#{filter}"
+      uri_facts = facts.count() > 0 ? "facts=#{facts.join(',')}" : ''
 
-      if facts.count() != 0
-        if !filter.empty?
-          parameters += '&'
-        else
-          parameters += '?'
-        end
-        parameters += 'facts=' + facts.join(',')
-      end
+      # join params
+      params = [uri_filter, uri_facts, uri_page, uri_per_page].select{|x| x != ''}.join('&')
+      params = '?' + params if !params.empty?
 
-      return URI.encode(parameters)
+      return URI.encode(params)
     end
 
     def api_base_url(url)
@@ -264,15 +312,6 @@ module RubyArcClient
       false
     end
 
-  end
-
-  class Agent < OpenStruct
-  end
-
-  class Facts < OpenStruct
-  end
-
-  class Job < OpenStruct
   end
 
 end
