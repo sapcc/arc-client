@@ -238,7 +238,7 @@ describe RubyArcClient do
 
       it "should return all jobs filtered by agent_id" do
         all_jobs = @client.list_jobs(token)
-        jobs = @client.list_jobs(token, "mo-3ee318860")
+        jobs = @client.list_jobs(token, "25867b75-8181-4ae8-b0df-a0e39f5cdad3")
         expect(jobs.data.count).to be > 0
         expect(jobs.data.count).to be < all_jobs.data.count
       end
@@ -249,7 +249,7 @@ describe RubyArcClient do
       end
 
       it "should paginate" do
-        jobs = @client.list_jobs(token, "mo-3ee318860", 1, 1)
+        jobs = @client.list_jobs(token, "25867b75-8181-4ae8-b0df-a0e39f5cdad3", 1, 1)
         expect(jobs.data.count).to be == 1
         expect(jobs.pagination.total_elements).to be > 1
         expect(jobs.pagination.total_pages).to be > 1
@@ -271,7 +271,7 @@ describe RubyArcClient do
       end
 
       it "should paginate" do
-        jobs = @client.list_jobs!(token, "mo-3ee318860", 1, 1)
+        jobs = @client.list_jobs!(token, "25867b75-8181-4ae8-b0df-a0e39f5cdad3", 1, 1)
         expect(jobs.data.count).to be == 1
         expect(jobs.pagination.total_elements).to be > 1
         expect(jobs.pagination.total_pages).to be > 1

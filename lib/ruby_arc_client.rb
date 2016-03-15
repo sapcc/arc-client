@@ -2,7 +2,6 @@ require "ruby_arc_client/version"
 require 'rest-client'
 require 'uri'
 require 'ostruct'
-require 'yaml'
 require 'json'
 
 module RubyArcClient
@@ -203,7 +202,7 @@ module RubyArcClient
 
     def run_job(token, options)
       response = api_request('post', URI::join(@api_server_url, 'jobs').to_s, token, options.to_json)
-      YAML.load(response)
+      JSON.parse(response)
     end
 
     def remove_agent(token, agent_id)
@@ -216,7 +215,7 @@ module RubyArcClient
 
     def get_job(token, job_id)
       response = api_request('get', URI::join(@api_server_url, 'jobs/', job_id).to_s, token, "")
-      Job.new(YAML.load(response))
+      Job.new(JSON.parse(response))
     end
 
     def get_all_jobs(token, filter_by_agent_id, page, per_page)
@@ -227,7 +226,7 @@ module RubyArcClient
         url += params
       end
       response = api_request('get', url, token, "")
-      hash_response = YAML.load(response)
+      hash_response = JSON.parse(response)
       hash_response.each do |job|
         jobs << Job.new(job)
       end
@@ -249,19 +248,19 @@ module RubyArcClient
 
     def get_all_facts(token, agent_id)
       response = api_request('get', URI::join(@api_server_url, 'agents/', agent_id + '/', "facts").to_s, token, "")
-      Facts.new(YAML.load(response))
+      Facts.new(JSON.parse(response))
     end
 
     def get_all_agents(token, filter, facts, page, per_page)
       agents = []
       parameters = build_agents_parameters_uri(filter, facts, page, per_page)
       response = api_request('get', URI::join(@api_server_url, 'agents', parameters).to_s, token, "")
-      hash_response = YAML.load(response)
+      hash_response = JSON.parse(response)
       hash_response.each do |agent|
         agent = Agent.new(agent)
         # convert facts json to facts model
         if !agent.facts.nil?
-          agent.facts = Facts.new(YAML.load(agent.facts.to_json))
+          agent.facts = Facts.new(agent.facts)
         end
         agents << agent
       end
@@ -272,9 +271,9 @@ module RubyArcClient
     def get_agent(token, agent_id, show_facts)
       parameter = build_agents_parameters_uri('', show_facts, '', '')
       response = api_request('get', URI::join(@api_server_url, 'agents/', agent_id, parameter).to_s, token, "")
-      agent = Agent.new(YAML.load(response))
+      agent = Agent.new(JSON.parse(response))
       if !agent.facts.nil?
-        agent.facts = Facts.new(YAML.load(agent.facts.to_json))
+        agent.facts = Facts.new(agent.facts)
       end
       return agent
     end
