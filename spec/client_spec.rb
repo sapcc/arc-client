@@ -240,7 +240,7 @@ describe RubyArcClient do
         all_jobs = @client.list_jobs(token)
         jobs = @client.list_jobs(token, "25867b75-8181-4ae8-b0df-a0e39f5cdad3")
         expect(jobs.data.count).to be > 0
-        expect(jobs.data.count).to be < all_jobs.data.count
+        expect(jobs.data.count).to be <= all_jobs.data.count
       end
 
       it "should rescue errors and return empty array" do
@@ -329,7 +329,7 @@ describe RubyArcClient do
 
       it "should return a job log" do
         jobs = @client.list_jobs(token)
-        log = @client.find_job_log!(token, jobs.data[0].request_id)
+        log = @client.find_job_log!(token, jobs.data[jobs.data.count - 1].request_id)
         expect(log).to_not be_nil
       end
 

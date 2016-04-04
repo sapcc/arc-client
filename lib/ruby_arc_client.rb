@@ -201,31 +201,28 @@ module RubyArcClient
     private
 
     def run_job(token, options)
-      response = api_request('post', URI::join(@api_server_url, 'jobs').to_s, token, options.to_json)
+      response = api_request('post', URI::join(@api_server_url, 'jobs').to_s, {}, token, options.to_json)
       JSON.parse(response)
     end
 
     def remove_agent(token, agent_id)
-      api_request('delete', URI::join(@api_server_url, 'agents/', agent_id).to_s, token, "")
+      api_request('delete', URI::join(@api_server_url, 'agents/', agent_id).to_s, {}, token, "")
     end
 
     def get_job_log(token, job_id)
-      api_request('get', URI::join(@api_server_url, 'jobs/', job_id + '/', 'log').to_s, token, "")
+      api_request('get', URI::join(@api_server_url, 'jobs/', job_id + '/', 'log').to_s, {}, token, "")
     end
 
     def get_job(token, job_id)
-      response = api_request('get', URI::join(@api_server_url, 'jobs/', job_id).to_s, token, "")
+      response = api_request('get', URI::join(@api_server_url, 'jobs/', job_id).to_s, {}, token, "")
       Job.new(JSON.parse(response))
     end
 
     def get_all_jobs(token, filter_by_agent_id, page, per_page)
       jobs = []
       url = URI::join(@api_server_url, 'jobs').to_s
-      params = build_jobs_parameters_uri(filter_by_agent_id, page, per_page)
-      if !params.empty?
-        url += params
-      end
-      response = api_request('get', url, token, "")
+      parameters = {page: page, per_page: per_page, agent_id: filter_by_agent_id }
+      response = api_request('get', url, parameters, token, "")
       hash_response = JSON.parse(response)
       hash_response.each do |job|
         jobs << Job.new(job)
@@ -233,28 +230,15 @@ module RubyArcClient
       Jobs.new(jobs, Pagination.new(response.headers[:pagination_pages], response.headers[:pagination_elements]))
     end
 
-    def build_jobs_parameters_uri(filter_by_agent_id, page, per_page)
-      # set params
-      uri_filter_by_agent_id = filter_by_agent_id.empty? ? '' : "agent_id=#{filter_by_agent_id}"
-      uri_page = page == 0 ? '' : "page=#{page}"
-      uri_per_page = per_page == 0 ? '' : "per_page=#{per_page}"
-
-      # join params
-      params = [uri_filter_by_agent_id, uri_page, uri_per_page].select{|x| x != ''}.join('&')
-      params = '?' + params if !params.empty?
-
-      return URI.encode(params)
-    end
-
     def get_all_facts(token, agent_id)
-      response = api_request('get', URI::join(@api_server_url, 'agents/', agent_id + '/', "facts").to_s, token, "")
+      response = api_request('get', URI::join(@api_server_url, 'agents/', agent_id + '/', "facts").to_s, {}, token, "")
       Facts.new(JSON.parse(response))
     end
 
     def get_all_agents(token, filter, facts, page, per_page)
       agents = []
-      parameters = build_agents_parameters_uri(filter, facts, page, per_page)
-      response = api_request('get', URI::join(@api_server_url, 'agents', parameters).to_s, token, "")
+      parameters = {q: filter, page: page, per_page: per_page, facts: (facts.count() > 0 ? facts.join(',') : '') }
+      response = api_request('get', URI::join(@api_server_url, 'agents').to_s, parameters, token, "")
       hash_response = JSON.parse(response)
       hash_response.each do |agent|
         agent = Agent.new(agent)
@@ -269,8 +253,7 @@ module RubyArcClient
     end
 
     def get_agent(token, agent_id, show_facts)
-      parameter = build_agents_parameters_uri('', show_facts, '', '')
-      response = api_request('get', URI::join(@api_server_url, 'agents/', agent_id, parameter).to_s, token, "")
+      response = api_request('get', URI::join(@api_server_url, 'agents/', agent_id).to_s, {facts: (show_facts.count() > 0 ? show_facts.join(',') : '')}, token, "")
       agent = Agent.new(JSON.parse(response))
       if !agent.facts.nil?
         agent.facts = Facts.new(agent.facts)
@@ -278,26 +261,16 @@ module RubyArcClient
       return agent
     end
 
-    def api_request(method, uri, token, payload)
+    # Rest-client
+    # Due to unfortunate choices in the original API, the params used to populate the query string are actually
+    # taken out of the headers hash. So if you want to pass both the params hash and more complex options,
+    # use the special key :params in the headers hash.
+    def api_request(method, uri, params={}, token, payload)
       RestClient::Request.execute(method: method.to_sym,
                                   url: uri,
-                                  headers: {'X-Auth-Token': token},
+                                  headers: {'X-Auth-Token': token, params: params},
                                   timeout: @timeout,
                                   payload: payload)
-    end
-
-    def build_agents_parameters_uri(filter, facts, page, per_page)
-      # set params
-      uri_page = page == 0 ? '' : "page=#{page}"
-      uri_per_page = per_page == 0 ? '' : "per_page=#{per_page}"
-      uri_filter = filter.empty? ? '' : "q=#{filter}"
-      uri_facts = facts.count() > 0 ? "facts=#{facts.join(',')}" : ''
-
-      # join params
-      params = [uri_filter, uri_facts, uri_page, uri_per_page].select{|x| x != ''}.join('&')
-      params = '?' + params if !params.empty?
-
-      return URI.encode(params)
     end
 
     def api_base_url(url)
