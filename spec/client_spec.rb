@@ -279,7 +279,7 @@ describe RubyArcClient do
 
     end
 
-    context "fin_job" do
+    context "find_job" do
 
       it "should return a job" do
         jobs = @client.list_jobs(token)
@@ -294,7 +294,7 @@ describe RubyArcClient do
 
     end
 
-    context "fin_job!" do
+    context "find_job!" do
 
       it "should return a job" do
         jobs = @client.list_jobs(token)
@@ -310,7 +310,7 @@ describe RubyArcClient do
 
     end
 
-    context "fin_job_log" do
+    context "find_job_log" do
 
       it "should return a job log" do
         jobs = @client.list_jobs(token)
@@ -325,7 +325,7 @@ describe RubyArcClient do
 
     end
 
-    context "fin_job_log!" do
+    context "find_job_log!" do
 
       it "should return a job log" do
         jobs = @client.list_jobs(token)
@@ -345,13 +345,13 @@ describe RubyArcClient do
 
       it "should execute a job" do
         agents = @client.list_agents(token)
-        options = {to: agents.data[0].agent_id, timeout: 15, agent: "execute", action: "script", payload: "echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\"" }
+        options = {to: agents.data[0].agent_id, timeout: 15, agent: "execute", action: "script", payload: "echo \"Script start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Script done\"" }
         job_id = @client.execute_job(token, options)
         expect(job_id.empty?).to be == false
       end
 
       it "should rescue errors and return empty string" do
-        options = {to: "non_existing_agent_id", timeout: 15, agent: "execute", action: "script", payload: "echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\"" }
+        options = {to: "non_existing_agent_id", timeout: 15, agent: "execute", action: "script", payload: "echo \"Script start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Script done\"" }
         job_id = @client.execute_job(token, options)
         expect(job_id.empty?).to be == true
       end
@@ -362,13 +362,13 @@ describe RubyArcClient do
 
       it "should execute a job" do
         agents = @client.list_agents(token)
-        options = {to: agents.data[0].agent_id, timeout: 15, agent: "execute", action: "script", payload: "echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\"" }
+        options = {to: agents.data[0].agent_id, timeout: 15, agent: "execute", action: "script", payload: "echo \"Script start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Script done\"" }
         job_id = @client.execute_job!(token, options)
         expect(job_id.empty?).to be == false
       end
 
       it "should rescue errors and return empty string" do
-        options = {to: "non_existing_agent_id", timeout: 15, agent: "execute", action: "script", payload: "echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\"" }
+        options = {to: "non_existing_agent_id", timeout: 15, agent: "execute", action: "script", payload: "echo \"Script start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Script done\"" }
         expect { @client.execute_job!(token, options) }.to raise_error { |error|
                                                                              expect(error).to be_a(RestClient::ResourceNotFound)
                                                                            }
