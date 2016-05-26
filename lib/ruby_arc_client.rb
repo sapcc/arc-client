@@ -18,6 +18,9 @@ module RubyArcClient
     end
   end
 
+  class Tags < OpenStruct
+  end
+
   class Facts < OpenStruct
   end
 
@@ -126,6 +129,48 @@ module RubyArcClient
       end
     end
 
+    def show_agent_tags(token, agent_id)
+      show_tags_from_agent(token, agent_id)
+    rescue => e
+      $stderr.puts "Ruby-Arc-Client: caught exception showing agent tags: #{e}"
+      return nil
+    end
+
+    def show_agent_tags!(token, agent_id)
+      if token == nil || token == '' || agent_id == nil || agent_id == ''
+        raise ArgumentError, "Ruby-Arc-Client: caught exception listing agent tags. Parameter token or agent_id nil or empty"
+      end
+      show_tags_from_agent(token, agent_id)
+    end
+
+    def add_agent_tags(token, agent_id, tags = {})
+      add_tags_to_agent(token, agent_id, tags)
+    rescue => e
+      $stderr.puts "Ruby-Arc-Client: caught exception adding agent tags: #{e}"
+      return nil
+    end
+
+    def add_agent_tags!(token, agent_id, tags = {})
+      if token == nil || token == '' || agent_id == nil || agent_id == ''
+        raise ArgumentError, "Ruby-Arc-Client: caught exception adding agent tags. Token or agent_id parameter not valid"
+      end
+      add_tags_to_agent(token, agent_id, tags)
+    end
+
+    def delete_agent_tag(token, agent_id, key = "")
+      remove_tag_from_agent(token, agent_id, key)
+    rescue => e
+      $stderr.puts "Ruby-Arc-Client: caught exception deleting agent tags: #{e}"
+      return nil
+    end
+
+    def delete_agent_tag!(token, agent_id, key = "")
+      if token == nil || token == '' || agent_id == nil || agent_id == ''
+        raise ArgumentError, "Ruby-Arc-Client: caught exception adding agent tags. Token or agent_id parameter not valid"
+      end
+      remove_tag_from_agent(token, agent_id, key)
+    end
+
     #
     # Jobs
     #
@@ -197,6 +242,28 @@ module RubyArcClient
     end
 
     private
+
+    def show_tags_from_agent(token, agent_id)
+      response = api_request('get', URI::join(@api_server_url, 'agents/', agent_id + '/', "tags").to_s, {}, token, "")
+      Tags.new(JSON.parse(response))
+    end
+
+    def add_tags_to_agent(token, agent_id, tags)
+      tags_string = ''
+      unless tags.empty?
+        tags.each_with_index do |(key, value), index|
+          tags_string << "#{key}=#{value}"
+          if index < (tags.count - 1)
+            tags_string << "&"
+          end
+        end
+      end
+      api_request('post', URI::join(@api_server_url, 'agents/', agent_id + '/', 'tags').to_s, {}, token, tags_string)
+    end
+
+    def remove_tag_from_agent(token, agent_id, key)
+      api_request('delete', URI::join(@api_server_url, 'agents/', agent_id + '/', 'tags/' + key).to_s, {}, token, "")
+    end
 
     def run_job(token, options)
       response = api_request('post', URI::join(@api_server_url, 'jobs').to_s, {}, token, options.to_json)

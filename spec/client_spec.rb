@@ -1,4 +1,6 @@
 require 'spec_helper'
+require 'securerandom'
+require 'uri'
 
 describe RubyArcClient do
   let(:token) { ENV['ARC_AUTH_TOKEN'] }
@@ -213,10 +215,180 @@ describe RubyArcClient do
         expect(deleted).to be == true
       end
 
-      it "should rescue errors" do
+      it "should not rescue errors" do
         expect { @client.delete_agent!(token, "some_non_exisiting_agent_id") }.to raise_error { |error|
                                                                                   expect(error).to be_a(RestClient::ResourceNotFound)
                                                                                 }
+      end
+
+    end
+
+    context "show_agent_tags" do
+
+      it "shoud return the agent tags" do
+        agents = @client.list_agents(token)
+        agent_id = agents.data[0].agent_id
+        tags = {test_tag1: 'tag1', test_tag2: 'tag2'}
+
+        # save some tags
+        @client.add_agent_tags(token, agent_id, tags)
+
+        # get the tags
+        new_tags = @client.show_agent_tags(token, agent_id)
+        tags.each do |key, value|
+          expect(new_tags.send(key.to_s)).to be == value
+        end
+      end
+
+      it "should rescue errors" do
+        tags = @client.show_agent_tags(token, 'some_non_exsiting_id')
+        expect(tags).to be_nil
+      end
+
+    end
+
+    context "show_agent_tags!" do
+
+      it "shoud return the agent tags" do
+        agents = @client.list_agents(token)
+        agent_id = agents.data[0].agent_id
+        tags = {test_tag1: 'tag1', test_tag2: 'tag2'}
+
+        # save some tags
+        @client.add_agent_tags(token, agent_id, tags)
+
+        # get the tags
+        new_tags = @client.show_agent_tags!(token, agent_id)
+        tags.each do |key, value|
+          expect(new_tags.send(key.to_s)).to be == value
+        end
+      end
+
+      it "should not rescue errors" do
+        expect {  @client.show_agent_tags!(token, 'some_non_exsiting_id') }.to raise_error { |error|
+                                                                                    expect(error).to be_a(RestClient::ResourceNotFound)
+                                                                                  }
+      end
+
+    end
+
+    context "add_agent_tags" do
+
+      it "should add the tags to the agent" do
+        agents = @client.list_agents(token)
+        agent_id = agents.data[0].agent_id
+        tags = {test_tag1: SecureRandom.hex(10), test_tag2: SecureRandom.hex(10)}
+
+        # save some tags
+        @client.add_agent_tags(token, agent_id, tags)
+
+        # get the tags
+        new_tags = @client.show_agent_tags!(token, agent_id)
+        tags.each do |key, value|
+          expect(new_tags.send(key.to_s)).to be == value
+        end
+      end
+
+      it "should rescue errors" do
+        response = @client.add_agent_tags(token, 'some_non_exsiting_id')
+        expect(response).to be_nil
+      end
+
+    end
+
+    context "add_agent_tags!" do
+
+      it "should add the tags to the agent" do
+        agents = @client.list_agents(token)
+        agent_id = agents.data[0].agent_id
+        tags = {test_tag1: SecureRandom.hex(10), test_tag2: SecureRandom.hex(10)}
+
+        # save some tags
+        @client.add_agent_tags!(token, agent_id, tags)
+
+        # get the tags
+        new_tags = @client.show_agent_tags!(token, agent_id)
+        tags.each do |key, value|
+          expect(new_tags.send(key.to_s)).to be == value
+        end
+      end
+
+      it "should not rescue errors" do
+        expect {  @client.add_agent_tags!(token, 'non_existing_id') }.to raise_error { |error|
+                                                                                 expect(error).to be_a(RestClient::ResourceNotFound)
+                                                                               }
+      end
+
+    end
+
+    context "delete_agent_tags" do
+
+      it "should remove the tags" do
+        agents = @client.list_agents(token)
+        agent_id = agents.data[0].agent_id
+        tags = {test_tag1: SecureRandom.hex(10), test_tag2: SecureRandom.hex(10)}
+
+        # save some tags
+        @client.add_agent_tags(token, agent_id, tags)
+
+        # remove them
+        tags.each do |key, value|
+          @client.delete_agent_tag(token, agent_id, key.to_s)
+        end
+
+        # check if tags are there
+        new_tags = @client.show_agent_tags!(token, agent_id)
+        tags.each do |key, value|
+          expect(new_tags.send(key.to_s)).to be == nil
+        end
+      end
+
+      it "should rescue errors" do
+        response = @client.delete_agent_tag(token, 'some_non_exsiting_id')
+        expect(response).to be_nil
+      end
+
+    end
+
+    context "delete_agent_tags!" do
+
+      it "should remove the tags" do
+        agents = @client.list_agents(token)
+        agent_id = agents.data[0].agent_id
+        tags = {test_tag1: SecureRandom.hex(10), test_tag2: SecureRandom.hex(10)}
+
+        # save some tags
+        @client.add_agent_tags(token, agent_id, tags)
+
+        # remove them
+        tags.each do |key, value|
+          @client.delete_agent_tag!(token, agent_id, key.to_s)
+        end
+
+        # check if tags are there
+        new_tags = @client.show_agent_tags!(token, agent_id)
+        tags.each do |key, value|
+          expect(new_tags.send(key.to_s)).to be == nil
+        end
+      end
+
+      it "should not rescue errors" do
+        expect {  @client.delete_agent_tag!(token, 'non_existing_id', 'some_key') }.to raise_error { |error|
+                                                                           expect(error).to be_a(RestClient::ResourceNotFound)
+                                                                         }
+      end
+
+      it "tests" do
+        agents = @client.list_agents(token)
+        agent_id = agents.data[0].agent_id
+        tags = {test_tag1: SecureRandom.hex(10), test_tag2: SecureRandom.hex(10)}
+
+        begin
+          @client.delete_agent_tag!(token, agent_id, 'some key')
+        rescue => e
+          puts e.message
+        end
+
       end
 
     end
@@ -329,7 +501,7 @@ describe RubyArcClient do
 
       it "should return a job log" do
         jobs = @client.list_jobs(token)
-        log = @client.find_job_log!(token, jobs.data[jobs.data.count - 1].request_id)
+        log = @client.find_job_log!(token, jobs.data[0].request_id)
         expect(log).to_not be_nil
       end
 
