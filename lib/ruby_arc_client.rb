@@ -1,4 +1,5 @@
 require "ruby_arc_client/version"
+require "ruby_arc_client/job"
 require 'rest-client'
 require 'uri'
 require 'ostruct'
@@ -18,9 +19,6 @@ module RubyArcClient
   end
 
   class Facts < OpenStruct
-  end
-
-  class Job < OpenStruct
   end
 
   class Jobs

@@ -1,0 +1,15 @@
+require 'ostruct'
+module RubyArcClient
+  class Job < OpenStruct
+
+    def completed?
+      %w{complete completed}.include? self.status
+    end
+    def failed?
+      self.status == "failed"
+    end
+    def running?
+      !failed? && !completed?
+    end
+  end
+end
