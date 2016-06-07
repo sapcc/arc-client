@@ -14,15 +14,15 @@ describe RubyArcClient do
 
     it 'should raise an argument error with a no valid url' do
       expect { client = RubyArcClient::Client.new(nil) }.to raise_error { |error|
-                                                    expect(error).to be_a(ArgumentError)
+                                                    expect(error).to be_a(RubyArcClient::ArgumentError)
                                                   }
 
       expect { client = RubyArcClient::Client.new("") }.to raise_error { |error|
-                                                   expect(error).to be_a(ArgumentError)
+                                                   expect(error).to be_a(RubyArcClient::ArgumentError)
                                                  }
 
       expect { client = RubyArcClient::Client.new("no valid url") }.to raise_error { |error|
-                                                               expect(error).to be_a(ArgumentError)
+                                                               expect(error).to be_a(RubyArcClient::ArgumentError)
                                                              }
     end
 
@@ -91,7 +91,7 @@ describe RubyArcClient do
 
       it "should not rescue errors" do
         expect { @client.list_agents!("some_not_valid_token") }.to raise_error { |error|
-                                                                     expect(error).to be_a(RestClient::Unauthorized)
+                                                                     expect(error).to be_a(RubyArcClient::ApiError)
                                                                    }
       end
 
@@ -153,7 +153,7 @@ describe RubyArcClient do
 
       it "should not rescue errors" do
         expect { @client.find_agent!(token, "some_not_existing_id") }.to raise_error { |error|
-                                                                           expect(error).to be_a(RestClient::ResourceNotFound)
+                                                                           expect(error).to be_a(RubyArcClient::ApiError)
                                                                          }
       end
 
@@ -184,7 +184,7 @@ describe RubyArcClient do
 
       it "should rescue errors and return nil" do
         expect { @client.show_agent_facts!(token, "some_non_exisiting_id") }.to raise_error { |error|
-                                                                                  expect(error).to be_a(RestClient::ResourceNotFound)
+                                                                                  expect(error).to be_a(RubyArcClient::ApiError)
                                                                                 }
       end
 
@@ -217,7 +217,7 @@ describe RubyArcClient do
 
       it "should not rescue errors" do
         expect { @client.delete_agent!(token, "some_non_exisiting_agent_id") }.to raise_error { |error|
-                                                                                  expect(error).to be_a(RestClient::ResourceNotFound)
+                                                                                  expect(error).to be_a(RubyArcClient::ApiError)
                                                                                 }
       end
 
@@ -266,7 +266,7 @@ describe RubyArcClient do
 
       it "should not rescue errors" do
         expect {  @client.show_agent_tags!(token, 'some_non_exsiting_id') }.to raise_error { |error|
-                                                                                    expect(error).to be_a(RestClient::ResourceNotFound)
+                                                                                    expect(error).to be_a(RubyArcClient::ApiError)
                                                                                   }
       end
 
@@ -315,7 +315,7 @@ describe RubyArcClient do
 
       it "should not rescue errors" do
         expect {  @client.add_agent_tags!(token, 'non_existing_id') }.to raise_error { |error|
-                                                                                 expect(error).to be_a(RestClient::ResourceNotFound)
+                                                                                 expect(error).to be_a(RubyArcClient::ApiError)
                                                                                }
       end
 
@@ -374,7 +374,7 @@ describe RubyArcClient do
 
       it "should not rescue errors" do
         expect {  @client.delete_agent_tag!(token, 'non_existing_id', 'some_key') }.to raise_error { |error|
-                                                                           expect(error).to be_a(RestClient::ResourceNotFound)
+                                                                           expect(error).to be_a(RubyArcClient::ApiError)
                                                                          }
       end
 
@@ -438,7 +438,7 @@ describe RubyArcClient do
 
       it "should not rescue errors" do
         expect { @client.list_jobs!("some_not_valid_token") }.to raise_error { |error|
-                                                                   expect(error).to be_a(RestClient::Unauthorized)
+                                                                   expect(error).to be_a(RubyArcClient::ApiError)
                                                                  }
       end
 
@@ -476,7 +476,7 @@ describe RubyArcClient do
 
       it "should not rescue errors" do
         expect { @client.find_job!(token, "some_not_existing_id") }.to raise_error { |error|
-                                                                           expect(error).to be_a(RestClient::ResourceNotFound)
+                                                                           expect(error).to be_a(RubyArcClient::ApiError)
                                                                          }
       end
 
@@ -507,7 +507,7 @@ describe RubyArcClient do
 
       it "should not rescue errors" do
         expect { @client.find_job_log!(token, "some_not_existing_id") }.to raise_error { |error|
-                                                                         expect(error).to be_a(RestClient::ResourceNotFound)
+                                                                         expect(error).to be_a(RubyArcClient::ApiError)
                                                                        }
       end
 
@@ -542,7 +542,7 @@ describe RubyArcClient do
       it "should rescue errors and return empty string" do
         options = {to: "non_existing_agent_id", timeout: 15, agent: "execute", action: "script", payload: "echo \"Script start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Script done\"" }
         expect { @client.execute_job!(token, options) }.to raise_error { |error|
-                                                                             expect(error).to be_a(RestClient::ResourceNotFound)
+                                                                             expect(error).to be_a(RubyArcClient::ApiError)
                                                                            }
       end
 

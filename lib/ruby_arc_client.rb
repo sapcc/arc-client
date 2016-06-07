@@ -52,7 +52,7 @@ module RubyArcClient
 
     def initialize(api_server_url, timeout = DEFAULT_TIMEOUT)
       if !valid_url? api_server_url
-        raise ArgumentError, "Ruby-Arc-Client: api_server_url not valid"
+        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: api_server_url not valid"
       end
 
       @timeout = timeout || DEFAULT_TIMEOUT
@@ -72,9 +72,12 @@ module RubyArcClient
 
     def list_agents!(token, filter = "", show_facts = [], page = 0, per_page = 0)
       if token == nil || token == ''
-        raise ArgumentError, "Ruby-Arc-Client: caught exception listing agents. Token parameter not valid"
+        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: caught exception listing agents. Token parameter not valid"
       end
       get_all_agents(token, filter, show_facts, page, per_page)
+    rescue => e
+      err = ApiError.new e.response
+      raise err
     end
 
     def find_agent(token, agent_id, show_facts = [])
@@ -86,9 +89,12 @@ module RubyArcClient
 
     def find_agent!(token, agent_id, show_facts = [])
       if token == nil || token == '' || agent_id == nil || agent_id == ''
-        raise ArgumentError, "Ruby-Arc-Client: caught exception finding an agent. Parameter token or agent_id nil or empty"
+        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: caught exception finding an agent. Parameter token or agent_id nil or empty"
       end
       get_agent(token, agent_id, show_facts)
+    rescue => e
+      err = ApiError.new e.response
+      raise err
     end
 
     def show_agent_facts(token, agent_id)
@@ -100,9 +106,12 @@ module RubyArcClient
 
     def show_agent_facts!(token, agent_id)
       if token == nil || token == '' || agent_id == nil || agent_id == ''
-        raise ArgumentError, "Ruby-Arc-Client: caught exception listing agent facts. Parameter token or agent_id nil or empty"
+        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: caught exception listing agent facts. Parameter token or agent_id nil or empty"
       end
       get_all_facts(token, agent_id)
+    rescue => e
+      err = ApiError.new e.response
+      raise err
     end
 
     def delete_agent(token, agent_id)
@@ -119,7 +128,7 @@ module RubyArcClient
 
     def delete_agent!(token, agent_id)
       if token == nil || token == '' || agent_id == nil || agent_id == ''
-        raise ArgumentError, "Ruby-Arc-Client: caught exception deleting an agent. Parameter token or agent_id nil or empty"
+        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: caught exception deleting an agent. Parameter token or agent_id nil or empty"
       end
       response = remove_agent(token, agent_id)
       if response.code == 200
@@ -127,6 +136,9 @@ module RubyArcClient
       else
         return false
       end
+    rescue => e
+      err = ApiError.new e.response
+      raise err
     end
 
     def show_agent_tags(token, agent_id)
@@ -138,9 +150,12 @@ module RubyArcClient
 
     def show_agent_tags!(token, agent_id)
       if token == nil || token == '' || agent_id == nil || agent_id == ''
-        raise ArgumentError, "Ruby-Arc-Client: caught exception listing agent tags. Parameter token or agent_id nil or empty"
+        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: caught exception listing agent tags. Parameter token or agent_id nil or empty"
       end
       show_tags_from_agent(token, agent_id)
+    rescue => e
+      err = ApiError.new e.response
+      raise err
     end
 
     def add_agent_tags(token, agent_id, tags = {})
@@ -152,9 +167,12 @@ module RubyArcClient
 
     def add_agent_tags!(token, agent_id, tags = {})
       if token == nil || token == '' || agent_id == nil || agent_id == ''
-        raise ArgumentError, "Ruby-Arc-Client: caught exception adding agent tags. Token or agent_id parameter not valid"
+        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: caught exception adding agent tags. Token or agent_id parameter not valid"
       end
       add_tags_to_agent(token, agent_id, tags)
+    rescue => e
+      err = ApiError.new e.response
+      raise err
     end
 
     def delete_agent_tag(token, agent_id, key = "")
@@ -166,9 +184,12 @@ module RubyArcClient
 
     def delete_agent_tag!(token, agent_id, key = "")
       if token == nil || token == '' || agent_id == nil || agent_id == ''
-        raise ArgumentError, "Ruby-Arc-Client: caught exception adding agent tags. Token or agent_id parameter not valid"
+        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: caught exception adding agent tags. Token or agent_id parameter not valid"
       end
       remove_tag_from_agent(token, agent_id, key)
+    rescue => e
+      err = ApiError.new e.response
+      raise err
     end
 
     #
@@ -184,9 +205,12 @@ module RubyArcClient
 
     def list_jobs!(token, filter_by_agent_id = "", page = 0, per_page = 0)
       if token == nil || token == ''
-        raise ArgumentError, "Ruby-Arc-Client: caught exception listing jobs. Token parameter not valid"
+        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: caught exception listing jobs. Token parameter not valid"
       end
       get_all_jobs(token, filter_by_agent_id, page, per_page)
+    rescue => e
+      err = ApiError.new e.response
+      raise err
     end
 
     def find_job(token, job_id)
@@ -198,9 +222,12 @@ module RubyArcClient
 
     def find_job!(token, job_id)
       if token == nil || token == '' || job_id == nil || job_id == ''
-        raise ArgumentError, "Ruby-Arc-Client: caught exception finding a job. Parameter token or job_id nil or empty"
+        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: caught exception finding a job. Parameter token or job_id nil or empty"
       end
       get_job(token, job_id)
+    rescue => e
+      err = ApiError.new e.response
+      raise err
     end
 
     def find_job_log(token, job_id)
@@ -212,9 +239,12 @@ module RubyArcClient
 
     def find_job_log!(token, job_id)
       if token == nil || token == '' || job_id == nil || job_id == ''
-        raise ArgumentError, "Ruby-Arc-Client: caught exception finding a job log. Parameter token or job_id nil or empty"
+        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: caught exception finding a job log. Parameter token or job_id nil or empty"
       end
       get_job_log(token, job_id)
+    rescue => e
+      err = ApiError.new e.response
+      raise err
     end
 
     def execute_job(token, options)
@@ -231,7 +261,7 @@ module RubyArcClient
 
     def execute_job!(token, options)
       if token == nil || token == ''
-        raise ArgumentError, "Ruby-Arc-Client: caught exception executing a job. Parameter token nil or empty"
+        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: caught exception executing a job. Parameter token nil or empty"
       end
       response = run_job(token, options)
       if response.nil?
@@ -239,6 +269,9 @@ module RubyArcClient
       else
         response['request_id']
       end
+    rescue => e
+      err = ApiError.new e.response
+      raise err
     end
 
     private
