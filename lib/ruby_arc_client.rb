@@ -1,5 +1,6 @@
 require "ruby_arc_client/version"
 require "ruby_arc_client/job"
+require "ruby_arc_client/error"
 require 'rest-client'
 require 'uri'
 require 'ostruct'
