@@ -6,38 +6,48 @@ module RubyArcClient
 
   class ApiError < StandardError
     attr_reader :json_data
+    attr :json_hash
 
     def initialize(json_data)
       super
       @json_data = json_data
+      begin
+        @json_hash = JSON.parse(json_data)
+      rescue
+        @json_hash = {}
+      end
     end
 
     def id
-      @json_data[:id]
+      @json_hash["id"]
     end
 
     def status
-      @json_data[:status]
+      @json_hash["status"]
     end
 
     def code
-      @json_data[:code]
+      @json_hash["code"]
     end
 
     def title
-      @json_data[:title]
+      @json_hash["title"]
     end
 
     def detail
-      @json_data[:detail]
+      @json_hash["detail"]
     end
 
     def source
-      "#{@json_data.fetch(:source, {}).fetch(:pointer)} - #{@json_data.fetch(:source, {}).fetch(:parameter)}"
+      "#{@json_hash.fetch("source", {}).fetch("pointer", '')} - #{@json_hash.fetch("source", {}).fetch("parameter", '')}"
     end
 
     def to_s
-      "#{@json_data.fetch(:title, "")} #{@json_data.fetch(:detail, "")}"
+      if @json_hash.is_a?(Hash)
+        return "#{@json_hash.fetch("title", "")} #{@json_hash.fetch("detail", "")}"
+      else
+        return @json_data
+      end
     end
 
   end

@@ -378,19 +378,6 @@ describe RubyArcClient do
                                                                          }
       end
 
-      it "tests" do
-        agents = @client.list_agents(token)
-        agent_id = agents.data[0].agent_id
-        tags = {test_tag1: SecureRandom.hex(10), test_tag2: SecureRandom.hex(10)}
-
-        begin
-          @client.delete_agent_tag!(token, agent_id, 'some key')
-        rescue => e
-          puts e.message
-        end
-
-      end
-
     end
 
   end
