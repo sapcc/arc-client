@@ -77,8 +77,7 @@ module RubyArcClient
       end
       get_all_agents(token, filter, show_facts, page, per_page)
     rescue => e
-      err = ApiError.new e.response
-      raise err
+      raise ApiError.new(e.response), e.message
     end
 
     def find_agent(token, agent_id, show_facts = [])
@@ -94,8 +93,7 @@ module RubyArcClient
       end
       get_agent(token, agent_id, show_facts)
     rescue => e
-      err = ApiError.new e.response
-      raise err
+      raise ApiError.new(e.response), e.message
     end
 
     def show_agent_facts(token, agent_id)
@@ -111,8 +109,7 @@ module RubyArcClient
       end
       get_all_facts(token, agent_id)
     rescue => e
-      err = ApiError.new e.response
-      raise err
+      raise ApiError.new(e.response), e.message
     end
 
     def delete_agent(token, agent_id)
@@ -138,8 +135,7 @@ module RubyArcClient
         return false
       end
     rescue => e
-      err = ApiError.new e.response
-      raise err
+      raise ApiError.new(e.response), e.message
     end
 
     def show_agent_tags(token, agent_id)
@@ -172,8 +168,7 @@ module RubyArcClient
       end
       add_tags_to_agent(token, agent_id, tags)
     rescue => e
-      err = ApiError.new e.response
-      raise err
+      raise ApiError.new(e.response), e.message
     end
 
     def delete_agent_tag(token, agent_id, key = "")
@@ -189,8 +184,7 @@ module RubyArcClient
       end
       remove_tag_from_agent(token, agent_id, key)
     rescue => e
-      err = ApiError.new e.response
-      raise err
+      raise ApiError.new(e.response), e.message
     end
 
     #
@@ -210,8 +204,7 @@ module RubyArcClient
       end
       get_all_jobs(token, filter_by_agent_id, page, per_page)
     rescue => e
-      err = ApiError.new e.response
-      raise err
+      raise ApiError.new(e.response), e.message
     end
 
     def find_job(token, job_id)
@@ -227,8 +220,7 @@ module RubyArcClient
       end
       get_job(token, job_id)
     rescue => e
-      err = ApiError.new e.response
-      raise err
+      raise ApiError.new(e.response), e.message
     end
 
     def find_job_log(token, job_id)
@@ -244,8 +236,7 @@ module RubyArcClient
       end
       get_job_log(token, job_id)
     rescue => e
-      err = ApiError.new e.response
-      raise err
+      raise ApiError.new(e.response), e.message
     end
 
     def execute_job(token, options)
@@ -271,8 +262,7 @@ module RubyArcClient
         response['request_id']
       end
     rescue => e
-      err = ApiError.new e.response
-      raise err
+      raise ApiError.new(e.response), e.message
     end
 
     private
