@@ -1,37 +1,17 @@
 require "ruby_arc_client/version"
 require "ruby_arc_client/job"
+require "ruby_arc_client/agent"
+require "ruby_arc_client/tag"
+require "ruby_arc_client/fact"
 require "ruby_arc_client/error"
+require "ruby_arc_client/user"
+
 require 'rest-client'
 require 'uri'
 require 'ostruct'
 require 'json'
 
 module RubyArcClient
-
-  class Agent < OpenStruct
-  end
-
-  class Agents
-    attr_reader :data, :pagination
-    def initialize(_agents=[], _pagination=nil)
-      @data = _agents
-      @pagination = _pagination
-    end
-  end
-
-  class Tags < OpenStruct
-  end
-
-  class Facts < OpenStruct
-  end
-
-  class Jobs
-    attr_reader :data, :pagination
-    def initialize(_jobs=[], _pagination=nil)
-      @data = _jobs
-      @pagination = _pagination
-    end
-  end
 
   class Pagination
     attr_reader :total_pages, :total_elements
@@ -304,7 +284,11 @@ module RubyArcClient
 
     def get_job(token, job_id)
       response = api_request('get', URI::join(@api_server_url, 'jobs/', job_id).to_s, {}, token, "")
-      Job.new(JSON.parse(response))
+      job = Job.new(JSON.parse(response))
+      if !job.user.nil?
+        job.user = User.new(job.user)
+      end
+      return job
     end
 
     def get_all_jobs(token, filter_by_agent_id, page, per_page)
@@ -313,8 +297,12 @@ module RubyArcClient
       parameters = {page: page, per_page: per_page, agent_id: filter_by_agent_id }
       response = api_request('get', url, parameters, token, "")
       hash_response = JSON.parse(response)
-      hash_response.each do |job|
-        jobs << Job.new(job)
+      hash_response.each do |j|
+        job = Job.new(j)
+        if !job.user.nil?
+          job.user = User.new(job.user)
+        end
+        jobs << job
       end
       Jobs.new(jobs, Pagination.new(response.headers[:pagination_pages], response.headers[:pagination_elements]))
     end

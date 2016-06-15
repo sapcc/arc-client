@@ -1,5 +1,15 @@
 require 'ostruct'
+
 module RubyArcClient
+
+  class Jobs
+    attr_reader :data, :pagination
+    def initialize(_jobs=[], _pagination=nil)
+      @data = _jobs
+      @pagination = _pagination
+    end
+  end
+
   class Job < OpenStruct
 
     def completed?
@@ -12,4 +22,5 @@ module RubyArcClient
       !failed? && !completed?
     end
   end
+
 end
