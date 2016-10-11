@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.summary       = %q{Ruby client to use the Arc API}
   spec.description   = %q{Ruby client to use the Arc API}
   spec.homepage      = "https://github.com/pages/monsoon/arc/"
-  spec.license       = "MIT"
+  spec.license       = "Apache 2"
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or
   # delete this section to allow pushing this gem to any host.
