@@ -2,47 +2,47 @@ require 'spec_helper'
 require 'securerandom'
 require 'uri'
 
-describe RubyArcClient do
-  let(:token) { ENV['ARC_AUTH_TOKEN'] }
-  let(:api_server_url) { 'https://arc-app' }
+describe ArcClient do
+  let(:token) { ENV['ARC_AUTH_TOKEN'] }           # e.g. 4a912b3274ce487790f86c73f4f59fd1
+  let(:api_server_url) { ENV['API_SERVER_URL'] }  # e.g. https://arc-app
 
   it 'has a version number' do
-    expect(RubyArcClient::VERSION).not_to be nil
+    expect(ArcClient::VERSION).not_to be nil
   end
 
   context "creating" do
 
     it 'should raise an argument error with a no valid url' do
-      expect { client = RubyArcClient::Client.new(nil) }.to raise_error { |error|
-                                                    expect(error).to be_a(RubyArcClient::ArgumentError)
+      expect { client = ArcClient::Client.new(nil) }.to raise_error { |error|
+                                                    expect(error).to be_a(ArcClient::ArgumentError)
                                                   }
 
-      expect { client = RubyArcClient::Client.new("") }.to raise_error { |error|
-                                                   expect(error).to be_a(RubyArcClient::ArgumentError)
+      expect { client = ArcClient::Client.new("") }.to raise_error { |error|
+                                                   expect(error).to be_a(ArcClient::ArgumentError)
                                                  }
 
-      expect { client = RubyArcClient::Client.new("no valid url") }.to raise_error { |error|
-                                                               expect(error).to be_a(RubyArcClient::ArgumentError)
+      expect { client = ArcClient::Client.new("no valid url") }.to raise_error { |error|
+                                                               expect(error).to be_a(ArcClient::ArgumentError)
                                                              }
     end
 
     it 'should create base url' do
-      client = RubyArcClient::Client.new("https://arc-app/miau/wau/bip")
+      client = ArcClient::Client.new("https://arc-app/miau/wau/bip")
       expect(client.api_server_url).to be == "https://arc-app/api/v1/"
     end
 
     it 'should set the default timeout' do
-      client = RubyArcClient::Client.new(api_server_url, nil)
+      client = ArcClient::Client.new(api_server_url, nil)
       expect(client.timeout).to be == 10
     end
 
     it 'should save the given timeout' do
-      client = RubyArcClient::Client.new(api_server_url, 50)
+      client = ArcClient::Client.new(api_server_url, 50)
       expect(client.timeout).to be == 50
     end
 
     it 'should return an instance' do
-      expect { client = RubyArcClient::Client.new(api_server_url) }.to_not raise_error
+      expect { client = ArcClient::Client.new(api_server_url) }.to_not raise_error
     end
 
   end
@@ -50,7 +50,7 @@ describe RubyArcClient do
   describe "Agents" do
 
     before(:each) do
-      @client = RubyArcClient::Client.new(api_server_url)
+      @client = ArcClient::Client.new(api_server_url)
     end
 
     context "list_agents" do
@@ -91,7 +91,7 @@ describe RubyArcClient do
 
       it "should not rescue errors" do
         expect { @client.list_agents!("some_not_valid_token") }.to raise_error { |error|
-                                                                     expect(error).to be_a(RubyArcClient::ApiError)
+                                                                     expect(error).to be_a(ArcClient::ApiError)
                                                                    }
       end
 
@@ -153,7 +153,7 @@ describe RubyArcClient do
 
       it "should not rescue errors" do
         expect { @client.find_agent!(token, "some_not_existing_id") }.to raise_error { |error|
-                                                                           expect(error).to be_a(RubyArcClient::ApiError)
+                                                                           expect(error).to be_a(ArcClient::ApiError)
                                                                          }
       end
 
@@ -184,7 +184,7 @@ describe RubyArcClient do
 
       it "should rescue errors and return nil" do
         expect { @client.show_agent_facts!(token, "some_non_exisiting_id") }.to raise_error { |error|
-                                                                                  expect(error).to be_a(RubyArcClient::ApiError)
+                                                                                  expect(error).to be_a(ArcClient::ApiError)
                                                                                 }
       end
 
@@ -217,7 +217,7 @@ describe RubyArcClient do
 
       it "should not rescue errors" do
         expect { @client.delete_agent!(token, "some_non_exisiting_agent_id") }.to raise_error { |error|
-                                                                                  expect(error).to be_a(RubyArcClient::ApiError)
+                                                                                  expect(error).to be_a(ArcClient::ApiError)
                                                                                 }
       end
 
@@ -266,7 +266,7 @@ describe RubyArcClient do
 
       it "should not rescue errors" do
         expect {  @client.show_agent_tags!(token, 'some_non_exsiting_id') }.to raise_error { |error|
-                                                                                    expect(error).to be_a(RubyArcClient::ApiError)
+                                                                                    expect(error).to be_a(ArcClient::ApiError)
                                                                                   }
       end
 
@@ -315,7 +315,7 @@ describe RubyArcClient do
 
       it "should not rescue errors" do
         expect {  @client.add_agent_tags!(token, 'non_existing_id') }.to raise_error { |error|
-                                                                                 expect(error).to be_a(RubyArcClient::ApiError)
+                                                                                 expect(error).to be_a(ArcClient::ApiError)
                                                                                }
       end
 
@@ -374,7 +374,7 @@ describe RubyArcClient do
 
       it "should not rescue errors" do
         expect {  @client.delete_agent_tag!(token, 'non_existing_id', 'some_key') }.to raise_error { |error|
-                                                                           expect(error).to be_a(RubyArcClient::ApiError)
+                                                                           expect(error).to be_a(ArcClient::ApiError)
                                                                          }
       end
 
@@ -385,8 +385,8 @@ describe RubyArcClient do
   describe "Jobs" do
 
     before(:each) do
-      @client = RubyArcClient::Client.new(api_server_url)
-      @agent_target = "d7cce588-a3bc-40c1-b281-a442b070b40b"
+      @client = ArcClient::Client.new(api_server_url)
+      @agent_target = "cc6163da-9500-4bb6-af1f-d27d2104e9e8"
     end
 
     context "list_jobs" do
@@ -433,7 +433,7 @@ describe RubyArcClient do
 
       it "should not rescue errors" do
         expect { @client.list_jobs!("some_not_valid_token") }.to raise_error { |error|
-                                                                   expect(error).to be_a(RubyArcClient::ApiError)
+                                                                   expect(error).to be_a(ArcClient::ApiError)
                                                                  }
       end
 
@@ -494,7 +494,7 @@ describe RubyArcClient do
 
       it "should not rescue errors" do
         expect { @client.find_job!(token, "some_not_existing_id") }.to raise_error { |error|
-                                                                           expect(error).to be_a(RubyArcClient::ApiError)
+                                                                           expect(error).to be_a(ArcClient::ApiError)
                                                                          }
       end
 
@@ -525,7 +525,7 @@ describe RubyArcClient do
 
       it "should not rescue errors" do
         expect { @client.find_job_log!(token, "some_not_existing_id") }.to raise_error { |error|
-                                                                         expect(error).to be_a(RubyArcClient::ApiError)
+                                                                         expect(error).to be_a(ArcClient::ApiError)
                                                                        }
       end
 
@@ -560,7 +560,7 @@ describe RubyArcClient do
       it "should rescue errors and return empty string" do
         options = {to: "non_existing_agent_id", timeout: 15, agent: "execute", action: "script", payload: "echo \"Script start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Script done\"" }
         expect { @client.execute_job!(token, options) }.to raise_error { |error|
-                                                                             expect(error).to be_a(RubyArcClient::ApiError)
+                                                                             expect(error).to be_a(ArcClient::ApiError)
                                                                            }
       end
 

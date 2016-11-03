@@ -1,6 +1,6 @@
 require 'ostruct'
 
-module RubyArcClient
+module ArcClient
 
   class Tags < OpenStruct
   end

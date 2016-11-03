@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-module RubyArcClient
+module ArcClient
 
   describe ApiError do
 

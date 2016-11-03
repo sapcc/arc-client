@@ -1,6 +1,6 @@
 require 'ostruct'
 
-module RubyArcClient
+module ArcClient
 
   class Jobs
     attr_reader :data, :pagination

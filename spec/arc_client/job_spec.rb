@@ -1,5 +1,5 @@
 require 'spec_helper'
-module RubyArcClient
+module ArcClient
   describe Job do
       it "is failed when status says so" do
         expect(Job.new(status: "failed").failed?).to eq(true)

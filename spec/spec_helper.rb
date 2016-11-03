@@ -1,3 +1,3 @@
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 
-require 'ruby_arc_client'
+require 'arc_client'

@@ -1,4 +1,4 @@
-language: ruby_arc_client
+language: arc_client
 rvm:
   - 2.2.0
 before_install: gem install bundler -v 1.10.6

@@ -1,6 +1,6 @@
 require "json"
 
-module RubyArcClient
+module ArcClient
 
   class ArgumentError < StandardError; end
 

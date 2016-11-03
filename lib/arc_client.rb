@@ -1,17 +1,17 @@
-require "ruby_arc_client/version"
-require "ruby_arc_client/job"
-require "ruby_arc_client/agent"
-require "ruby_arc_client/tag"
-require "ruby_arc_client/fact"
-require "ruby_arc_client/error"
-require "ruby_arc_client/user"
+require "arc_client/version"
+require "arc_client/job"
+require "arc_client/agent"
+require "arc_client/tag"
+require "arc_client/fact"
+require "arc_client/error"
+require "arc_client/user"
 
 require 'rest-client'
 require 'uri'
 require 'ostruct'
 require 'json'
 
-module RubyArcClient
+module ArcClient
 
   class Pagination
     attr_reader :total_pages, :total_elements
@@ -33,7 +33,7 @@ module RubyArcClient
 
     def initialize(api_server_url, timeout = DEFAULT_TIMEOUT)
       if !valid_url? api_server_url
-        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: api_server_url not valid"
+        raise ArcClient::ArgumentError, "Arc-Client: api_server_url not valid"
       end
 
       @timeout = timeout || DEFAULT_TIMEOUT
@@ -47,13 +47,13 @@ module RubyArcClient
     def list_agents(token, filter = "", show_facts = [], page = 0, per_page = 0)
       get_all_agents(token, filter, show_facts, page, per_page)
     rescue => e
-      $stderr.puts "Ruby-Arc-Client: caught exception listing agents: #{e}"
+      $stderr.puts "Arc-Client: caught exception listing agents: #{e}"
       return Agents.new()
     end
 
     def list_agents!(token, filter = "", show_facts = [], page = 0, per_page = 0)
       if token == nil || token == ''
-        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: caught exception listing agents. Token parameter not valid"
+        raise ArcClient::ArgumentError, "Arc-Client: caught exception listing agents. Token parameter not valid"
       end
       get_all_agents(token, filter, show_facts, page, per_page)
     rescue => e
@@ -72,13 +72,13 @@ module RubyArcClient
     def find_agent(token, agent_id, show_facts = [])
       get_agent(token, agent_id, show_facts)
     rescue => e
-      $stderr.puts "Ruby-Arc-Client: caught exception finding an agent: #{e}"
+      $stderr.puts "Arc-Client: caught exception finding an agent: #{e}"
       return nil
     end
 
     def find_agent!(token, agent_id, show_facts = [])
       if token == nil || token == '' || agent_id == nil || agent_id == ''
-        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: caught exception finding an agent. Parameter token or agent_id nil or empty"
+        raise ArcClient::ArgumentError, "Arc-Client: caught exception finding an agent. Parameter token or agent_id nil or empty"
       end
       get_agent(token, agent_id, show_facts)
     rescue => e
@@ -97,13 +97,13 @@ module RubyArcClient
     def show_agent_facts(token, agent_id)
       get_all_facts(token, agent_id)
     rescue => e
-      $stderr.puts "Ruby-Arc-Client: caught exception listing agent facts: #{e}"
+      $stderr.puts "Arc-Client: caught exception listing agent facts: #{e}"
       return nil
     end
 
     def show_agent_facts!(token, agent_id)
       if token == nil || token == '' || agent_id == nil || agent_id == ''
-        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: caught exception listing agent facts. Parameter token or agent_id nil or empty"
+        raise ArcClient::ArgumentError, "Arc-Client: caught exception listing agent facts. Parameter token or agent_id nil or empty"
       end
       get_all_facts(token, agent_id)
     rescue => e
@@ -127,13 +127,13 @@ module RubyArcClient
         return false
       end
     rescue => e
-      $stderr.puts "Ruby-Arc-Client: caught exception deleting an agent: #{e}"
+      $stderr.puts "Arc-Client: caught exception deleting an agent: #{e}"
       return false
     end
 
     def delete_agent!(token, agent_id)
       if token == nil || token == '' || agent_id == nil || agent_id == ''
-        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: caught exception deleting an agent. Parameter token or agent_id nil or empty"
+        raise ArcClient::ArgumentError, "Arc-Client: caught exception deleting an agent. Parameter token or agent_id nil or empty"
       end
       response = remove_agent(token, agent_id)
       if response.code == 200
@@ -156,13 +156,13 @@ module RubyArcClient
     def show_agent_tags(token, agent_id)
       show_tags_from_agent(token, agent_id)
     rescue => e
-      $stderr.puts "Ruby-Arc-Client: caught exception showing agent tags: #{e}"
+      $stderr.puts "Arc-Client: caught exception showing agent tags: #{e}"
       return nil
     end
 
     def show_agent_tags!(token, agent_id)
       if token == nil || token == '' || agent_id == nil || agent_id == ''
-        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: caught exception listing agent tags. Parameter token or agent_id nil or empty"
+        raise ArcClient::ArgumentError, "Arc-Client: caught exception listing agent tags. Parameter token or agent_id nil or empty"
       end
       show_tags_from_agent(token, agent_id)
     rescue => e
@@ -181,13 +181,13 @@ module RubyArcClient
     def add_agent_tags(token, agent_id, tags = {})
       add_tags_to_agent(token, agent_id, tags)
     rescue => e
-      $stderr.puts "Ruby-Arc-Client: caught exception adding agent tags: #{e}"
+      $stderr.puts "Arc-Client: caught exception adding agent tags: #{e}"
       return nil
     end
 
     def add_agent_tags!(token, agent_id, tags = {})
       if token == nil || token == '' || agent_id == nil || agent_id == ''
-        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: caught exception adding agent tags. Token or agent_id parameter not valid"
+        raise ArcClient::ArgumentError, "Arc-Client: caught exception adding agent tags. Token or agent_id parameter not valid"
       end
       add_tags_to_agent(token, agent_id, tags)
     rescue => e
@@ -206,13 +206,13 @@ module RubyArcClient
     def delete_agent_tag(token, agent_id, key = "")
       remove_tag_from_agent(token, agent_id, key)
     rescue => e
-      $stderr.puts "Ruby-Arc-Client: caught exception deleting agent tags: #{e}"
+      $stderr.puts "Arc-Client: caught exception deleting agent tags: #{e}"
       return nil
     end
 
     def delete_agent_tag!(token, agent_id, key = "")
       if token == nil || token == '' || agent_id == nil || agent_id == ''
-        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: caught exception adding agent tags. Token or agent_id parameter not valid"
+        raise ArcClient::ArgumentError, "Arc-Client: caught exception adding agent tags. Token or agent_id parameter not valid"
       end
       remove_tag_from_agent(token, agent_id, key)
     rescue => e
@@ -235,13 +235,13 @@ module RubyArcClient
     def list_jobs(token, filter_by_agent_id = "", page = 0, per_page = 0)
       get_all_jobs(token, filter_by_agent_id, page, per_page)
     rescue => e
-      $stderr.puts "Ruby-Arc-Client: caught exception listing jobs: #{e}"
+      $stderr.puts "Arc-Client: caught exception listing jobs: #{e}"
       return Jobs.new()
     end
 
     def list_jobs!(token, filter_by_agent_id = "", page = 0, per_page = 0)
       if token == nil || token == ''
-        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: caught exception listing jobs. Token parameter not valid"
+        raise ArcClient::ArgumentError, "Arc-Client: caught exception listing jobs. Token parameter not valid"
       end
       get_all_jobs(token, filter_by_agent_id, page, per_page)
     rescue => e
@@ -260,13 +260,13 @@ module RubyArcClient
     def find_job(token, job_id)
       get_job(token, job_id)
     rescue => e
-      $stderr.puts "Ruby-Arc-Client: caught exception finding a job: #{e}"
+      $stderr.puts "Arc-Client: caught exception finding a job: #{e}"
       return nil
     end
 
     def find_job!(token, job_id)
       if token == nil || token == '' || job_id == nil || job_id == ''
-        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: caught exception finding a job. Parameter token or job_id nil or empty"
+        raise ArcClient::ArgumentError, "Arc-Client: caught exception finding a job. Parameter token or job_id nil or empty"
       end
       get_job(token, job_id)
     rescue => e
@@ -285,13 +285,13 @@ module RubyArcClient
     def find_job_log(token, job_id)
       get_job_log(token, job_id)
     rescue => e
-      $stderr.puts "Ruby-Arc-Client: caught exception getting a job log: #{e}"
+      $stderr.puts "Arc-Client: caught exception getting a job log: #{e}"
       return ""
     end
 
     def find_job_log!(token, job_id)
       if token == nil || token == '' || job_id == nil || job_id == ''
-        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: caught exception finding a job log. Parameter token or job_id nil or empty"
+        raise ArcClient::ArgumentError, "Arc-Client: caught exception finding a job log. Parameter token or job_id nil or empty"
       end
       get_job_log(token, job_id)
     rescue => e
@@ -315,13 +315,13 @@ module RubyArcClient
         response['request_id']
       end
     rescue => e
-      $stderr.puts "Ruby-Arc-Client: caught exception executing a job: #{e}"
+      $stderr.puts "Arc-Client: caught exception executing a job: #{e}"
       return ""
     end
 
     def execute_job!(token, options)
       if token == nil || token == ''
-        raise RubyArcClient::ArgumentError, "Ruby-Arc-Client: caught exception executing a job. Parameter token nil or empty"
+        raise ArcClient::ArgumentError, "Arc-Client: caught exception executing a job. Parameter token nil or empty"
       end
       response = run_job(token, options)
       if response.nil?
