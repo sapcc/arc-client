@@ -5,6 +5,7 @@ require "arc_client/tag"
 require "arc_client/fact"
 require "arc_client/error"
 require "arc_client/user"
+require 'arc_client/pki_token'
 
 require 'rest-client'
 require 'uri'
@@ -342,10 +343,62 @@ module ArcClient
       end
     end
 
+    #
+    # PKI
+    #
+
+    def create_pki_token(token, common_name, options = {})
+      generate_pki_token(token, common_name, options)
+    rescue => e
+      $stderr.puts "Arc-Client: caught exception creating pki token: #{e}"
+      return nil
+    end
+
+    def create_pki_token!(token, common_name, options = {})
+      if token == nil || token == ''
+        raise ArcClient::ArgumentError, "Arc-Client: caught exception creating a pki token. Parameter token is empty"
+      end
+      generate_pki_token(token, common_name, options)
+    rescue => e
+      if e.respond_to? :response
+        raise ApiError.new(e.response), e.message
+      else
+        raise ApiError.new({"id" => SecureRandom.hex(4).upcase,
+                            "status" => "API Error",
+                            "code" => 0,
+                            "title" => e.message,
+                            "detail" => CGI::escapeHTML(e.inspect.to_s),
+                            "source" => {"pointer" => "", "parameter" => {"token" => token, "common_name" => common_name} }}.to_json), e.message
+      end
+    end
+
     private
 
+    def generate_pki_token(token, common_name, options={})
+      body = ""
+      if !common_name.nil? || !common_name.empty?
+        body = "{\"CN\": \"#{common_name}\"}"
+      end
+
+      # if no content type defined json will be set
+      headers = options.fetch("headers", {})
+      content_type_found = false
+      headers.keys.each do |key|
+        if key.downcase == "content-type"
+          content_type_found = true
+        end
+      end
+      unless content_type_found
+        headers["Content-Type"] = "application/json"
+        options["headers"] = headers
+      end
+
+      response = api_request('post', URI::join(@api_server_url, 'pki/token').to_s, token, body, options)
+      PkiToken.new(JSON.parse(response))
+    end
+
     def show_tags_from_agent(token, agent_id)
-      response = api_request('get', URI::join(@api_server_url, 'agents/', agent_id + '/', "tags").to_s, {}, token, "")
+      response = api_request('get', URI::join(@api_server_url, 'agents/', agent_id + '/', "tags").to_s, token, "", {})
       Tags.new(JSON.parse(response))
     end
 
@@ -359,28 +412,28 @@ module ArcClient
           end
         end
       end
-      api_request('post', URI::join(@api_server_url, 'agents/', agent_id + '/', 'tags').to_s, {}, token, tags_string)
+      api_request('post', URI::join(@api_server_url, 'agents/', agent_id + '/', 'tags').to_s, token, tags_string, {})
     end
 
     def remove_tag_from_agent(token, agent_id, key)
-      api_request('delete', URI::join(@api_server_url, 'agents/', agent_id + '/', 'tags/' + key).to_s, {}, token, "")
+      api_request('delete', URI::join(@api_server_url, 'agents/', agent_id + '/', 'tags/' + key).to_s, token, "", {})
     end
 
     def run_job(token, options)
-      response = api_request('post', URI::join(@api_server_url, 'jobs').to_s, {}, token, options.to_json)
+      response = api_request('post', URI::join(@api_server_url, 'jobs').to_s, token, options.to_json, {})
       JSON.parse(response)
     end
 
     def remove_agent(token, agent_id)
-      api_request('delete', URI::join(@api_server_url, 'agents/', agent_id).to_s, {}, token, "")
+      api_request('delete', URI::join(@api_server_url, 'agents/', agent_id).to_s, token, "", {})
     end
 
     def get_job_log(token, job_id)
-      api_request('get', URI::join(@api_server_url, 'jobs/', job_id + '/', 'log').to_s, {}, token, "")
+      api_request('get', URI::join(@api_server_url, 'jobs/', job_id + '/', 'log').to_s, token, "", {})
     end
 
     def get_job(token, job_id)
-      response = api_request('get', URI::join(@api_server_url, 'jobs/', job_id).to_s, {}, token, "")
+      response = api_request('get', URI::join(@api_server_url, 'jobs/', job_id).to_s, token, "", {})
       job = Job.new(JSON.parse(response))
       if !job.user.nil?
         job.user = User.new(job.user)
@@ -392,7 +445,7 @@ module ArcClient
       jobs = []
       url = URI::join(@api_server_url, 'jobs').to_s
       parameters = {page: page, per_page: per_page, agent_id: filter_by_agent_id }
-      response = api_request('get', url, parameters, token, "")
+      response = api_request('get', url, token, "", {"params" => parameters})
       hash_response = JSON.parse(response)
       hash_response.each do |j|
         job = Job.new(j)
@@ -405,14 +458,14 @@ module ArcClient
     end
 
     def get_all_facts(token, agent_id)
-      response = api_request('get', URI::join(@api_server_url, 'agents/', agent_id + '/', "facts").to_s, {}, token, "")
+      response = api_request('get', URI::join(@api_server_url, 'agents/', agent_id + '/', "facts").to_s, token, "", {})
       Facts.new(JSON.parse(response))
     end
 
     def get_all_agents(token, filter, facts, page, per_page)
       agents = []
       parameters = {q: filter, page: page, per_page: per_page, facts: (facts.count() > 0 ? facts.join(',') : '') }
-      response = api_request('get', URI::join(@api_server_url, 'agents').to_s, parameters, token, "")
+      response = api_request('get', URI::join(@api_server_url, 'agents').to_s, token, "", {"params" => parameters})
       hash_response = JSON.parse(response)
       hash_response.each do |agent|
         agent = Agent.new(agent)
@@ -427,7 +480,7 @@ module ArcClient
     end
 
     def get_agent(token, agent_id, show_facts)
-      response = api_request('get', URI::join(@api_server_url, 'agents/', agent_id).to_s, {facts: (show_facts.count() > 0 ? show_facts.join(',') : '')}, token, "")
+      response = api_request('get', URI::join(@api_server_url, 'agents/', agent_id).to_s, token, "", {'params' => {facts: (show_facts.count() > 0 ? show_facts.join(',') : '')}})
       agent = Agent.new(JSON.parse(response))
       if !agent.facts.nil?
         agent.facts = Facts.new(agent.facts)
@@ -439,10 +492,13 @@ module ArcClient
     # Due to unfortunate choices in the original API, the params used to populate the query string are actually
     # taken out of the headers hash. So if you want to pass both the params hash and more complex options,
     # use the special key :params in the headers hash.
-    def api_request(method, uri, params={}, token, payload)
+    def api_request(method, uri, token, payload, options={})
+      params = options.fetch('params', {})
+      headers = options.fetch('headers', {})
+      req_headers = headers.merge({params: params}).merge({'X-Auth-Token': token})
       RestClient::Request.execute(method: method.to_sym,
                                   url: uri,
-                                  headers: {'X-Auth-Token': token, params: params},
+                                  headers: req_headers,
                                   timeout: @timeout,
                                   payload: payload)
     end

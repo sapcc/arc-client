@@ -4,7 +4,8 @@ require 'uri'
 
 describe ArcClient do
   let(:token) { ENV['ARC_AUTH_TOKEN'] }           # e.g. 4a912b3274ce487790f86c73f4f59fd1
-  let(:api_server_url) { ENV['API_SERVER_URL'] }  # e.g. https://arc-app
+  let(:api_server_url) { ENV['ARC_API_SERVER_URL'] }  # e.g. https://arc-app
+  let(:auth_headers) { ENV['ARC_API_AUTH_HEADERS'] }  # e.g. {"X-Identity-Status" => "Confirmed", "X-Project-Id" => "test-project-id", "X-Project-Domain-Id" => "test-project-domain-id"}
 
   it 'has a version number' do
     expect(ArcClient::VERSION).not_to be nil
@@ -562,6 +563,44 @@ describe ArcClient do
         expect { @client.execute_job!(token, options) }.to raise_error { |error|
                                                                              expect(error).to be_a(ArcClient::ApiError)
                                                                            }
+      end
+
+    end
+
+  end
+
+  describe "pki" do
+
+    before(:each) do
+      @client = ArcClient::Client.new(api_server_url)
+    end
+
+    context "create_pki_token" do
+
+      it "should create a token" do
+        pki_token = @client.create_pki_token(token, "test_common_name", {'headers' => eval(auth_headers)})
+        expect(pki_token).to_not be_nil
+      end
+
+      it "should rescue errors and return nil" do
+        pki_token = @client.create_pki_token(token, "test_common_name", {'headers' => {}})
+        expect(pki_token).to be_nil
+      end
+
+    end
+
+    context "create_pki_token!" do
+
+      it "should create a token" do
+        pki_token = @client.create_pki_token!(token, "test_common_name", {'headers' => eval(auth_headers)})
+        expect(pki_token).to_not be_nil
+      end
+
+
+      it "should rescue errors and return nil" do
+        expect {@client.create_pki_token!(token, "test_common_name", {'headers' => {}}) }.to raise_error { |error|
+          expect(error).to be_a(ArcClient::ApiError)
+        }
       end
 
     end
