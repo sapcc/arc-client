@@ -58,7 +58,7 @@ module ArcClient
       end
       get_all_agents(token, filter, show_facts, page, per_page)
     rescue => e
-      if e.respond_to? :response
+      if ApiError.data_processable?(e)
         raise ApiError.new(e.response), e.message
       else
         raise ApiError.new({"id" => SecureRandom.hex(4).upcase,
@@ -83,7 +83,7 @@ module ArcClient
       end
       get_agent(token, agent_id, show_facts)
     rescue => e
-      if e.respond_to? :response
+      if ApiError.data_processable?(e)
         raise ApiError.new(e.response), e.message
       else
         raise ApiError.new({"id" => SecureRandom.hex(4).upcase,
@@ -108,7 +108,7 @@ module ArcClient
       end
       get_all_facts(token, agent_id)
     rescue => e
-      if e.respond_to? :response
+      if ApiError.data_processable?(e)
         raise ApiError.new(e.response), e.message
       else
         raise ApiError.new({"id" => SecureRandom.hex(4).upcase,
@@ -143,7 +143,7 @@ module ArcClient
         return false
       end
     rescue => e
-      if e.respond_to? :response
+      if ApiError.data_processable?(e)
         raise ApiError.new(e.response), e.message
       else
         raise ApiError.new({"id" => SecureRandom.hex(4).upcase,
@@ -167,7 +167,7 @@ module ArcClient
       end
       show_tags_from_agent(token, agent_id)
     rescue => e
-      if e.respond_to? :response
+      if ApiError.data_processable?(e)
         raise ApiError.new(e.response), e.message
       else
         raise ApiError.new({"id" => SecureRandom.hex(4).upcase,
@@ -192,7 +192,7 @@ module ArcClient
       end
       add_tags_to_agent(token, agent_id, tags)
     rescue => e
-      if e.respond_to? :response
+      if ApiError.data_processable?(e)
         raise ApiError.new(e.response), e.message
       else
         raise ApiError.new({"id" => SecureRandom.hex(4).upcase,
@@ -217,7 +217,7 @@ module ArcClient
       end
       remove_tag_from_agent(token, agent_id, key)
     rescue => e
-      if e.respond_to? :response
+      if ApiError.data_processable?(e)
         raise ApiError.new(e.response), e.message
       else
         raise ApiError.new({"id" => SecureRandom.hex(4).upcase,
@@ -246,7 +246,7 @@ module ArcClient
       end
       get_all_jobs(token, filter_by_agent_id, page, per_page)
     rescue => e
-      if e.respond_to? :response
+      if ApiError.data_processable?(e)
         raise ApiError.new(e.response), e.message
       else
         raise ApiError.new({"id" => SecureRandom.hex(4).upcase,
@@ -271,7 +271,7 @@ module ArcClient
       end
       get_job(token, job_id)
     rescue => e
-      if e.respond_to? :response
+      if ApiError.data_processable?(e)
         raise ApiError.new(e.response), e.message
       else
         raise ApiError.new({"id" => SecureRandom.hex(4).upcase,
@@ -296,7 +296,7 @@ module ArcClient
       end
       get_job_log(token, job_id)
     rescue => e
-      if e.respond_to? :response
+      if ApiError.data_processable?(e)
         raise ApiError.new(e.response), e.message
       else
         raise ApiError.new({"id" => SecureRandom.hex(4).upcase,
@@ -331,7 +331,7 @@ module ArcClient
         response['request_id']
       end
     rescue => e
-      if e.respond_to? :response
+      if ApiError.data_processable?(e)
         raise ApiError.new(e.response), e.message
       else
         raise ApiError.new({"id" => SecureRandom.hex(4).upcase,
