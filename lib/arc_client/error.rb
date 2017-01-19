@@ -8,6 +8,10 @@ module ArcClient
     attr_reader :json_data
     attr :json_hash
 
+    def self.data_processable?(exception)
+      return (exception.respond_to? :response) && (JSON.parse(exception.response) rescue false)
+    end
+
     def initialize(json_data)
       super
       @json_data = json_data

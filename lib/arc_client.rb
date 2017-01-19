@@ -360,7 +360,7 @@ module ArcClient
       end
       generate_pki_token(token, common_name, options)
     rescue => e
-      if e.respond_to? :response
+      if ApiError.data_processable?(e)
         raise ApiError.new(e.response), e.message
       else
         raise ApiError.new({"id" => SecureRandom.hex(4).upcase,
@@ -380,21 +380,14 @@ module ArcClient
         body = "{\"CN\": \"#{common_name}\"}"
       end
 
-      # if no content type defined json will be set
-      headers = options.fetch("headers", {})
-      content_type_found = false
-      headers.keys.each do |key|
-        if key.downcase == "content-type"
-          content_type_found = true
-        end
-      end
-      unless content_type_found
-        headers["Content-Type"] = "application/json"
-        options["headers"] = headers
-      end
-
       response = api_request('post', URI::join(@api_server_url, 'pki/token').to_s, token, body, options)
-      PkiToken.new(JSON.parse(response))
+
+      # create object if response is JSON
+      begin
+        PkiToken.new(JSON.parse(response))
+      rescue
+        return response.body
+      end
     end
 
     def show_tags_from_agent(token, agent_id)
