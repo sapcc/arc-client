@@ -386,7 +386,7 @@ describe ArcClient do
 
     before(:each) do
       @client = ArcClient::Client.new(api_server_url)
-      @agent_target = "0128e993-c709-4ce1-bccf-e06eb10900a0"
+      @agent_target = "99da3762-921b-47fa-b02d-90b44fa63eba"
     end
 
     context "list_jobs" do
@@ -574,43 +574,43 @@ describe ArcClient do
       @client = ArcClient::Client.new(api_server_url)
     end
 
-    context "create_pki_token" do
+    context "agent_init" do
 
       it "should return a pki token object" do
-        pki_token = @client.create_pki_token(token, "test_common_name") # , {'headers' => eval(auth_headers)}
-        expect(pki_token.instance_of? ArcClient::PkiToken).to be_truthy
+        pki_token = @client.agent_init(token, "test_common_name") # , {'headers' => eval(auth_headers)}
+        expect(pki_token.instance_of? ArcClient::AgentInstall).to be_truthy
         expect(pki_token).to_not be_nil
       end
 
       it "should return also different asnwers depending on the headers" do
-        pki_token = @client.create_pki_token(token, "test_common_name", {'headers' => {"Accept" => "text/x-shellscript"}} )
+        pki_token = @client.agent_init(token, "test_common_name", {'headers' => {"Accept" => "text/x-shellscript"}} )
         expect(pki_token.instance_of? String).to be_truthy
         expect(pki_token).to_not be_nil
       end
 
       it "should rescue errors and return nil" do
-        pki_token = @client.create_pki_token("no_valid_token", "test_common_name") # , {'headers' => {}}
+        pki_token = @client.agent_init("no_valid_token", "test_common_name") # , {'headers' => {}}
         expect(pki_token).to be_nil
       end
 
     end
 
-    context "create_pki_token!" do
+    context "agent_init!" do
 
       it "should create a token" do
-        pki_token = @client.create_pki_token!(token, "test_common_name") # , {'headers' => eval(auth_headers)}
-        expect(pki_token.instance_of? ArcClient::PkiToken).to be_truthy
+        pki_token = @client.agent_init!(token, "test_common_name") # , {'headers' => eval(auth_headers)}
+        expect(pki_token.instance_of? ArcClient::AgentInstall).to be_truthy
         expect(pki_token).to_not be_nil
       end
 
       it "should return also different asnwers depending on the headers" do
-        pki_token = @client.create_pki_token!(token, "test_common_name", {'headers' => {"Accept" => "text/x-shellscript"}} )
+        pki_token = @client.agent_init!(token, "test_common_name", {'headers' => {"Accept" => "text/x-shellscript"}} )
         expect(pki_token.instance_of? String).to be_truthy
         expect(pki_token).to_not be_nil
       end
 
       it "should rescue errors and return nil" do
-        expect {@client.create_pki_token!("no_valid_token", "test_common_name") }.to raise_error { |error| # , {'headers' => {}}
+        expect {@client.agent_init!("no_valid_token", "test_common_name") }.to raise_error { |error| # , {'headers' => {}}
           expect(error).to be_a(ArcClient::ApiError)
         }
       end

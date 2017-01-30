@@ -2,7 +2,7 @@ require 'ostruct'
 
 module ArcClient
 
-  class PkiToken < OpenStruct
+  class AgentInstall < OpenStruct
   end
 
 end

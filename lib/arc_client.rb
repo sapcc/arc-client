@@ -5,7 +5,7 @@ require "arc_client/tag"
 require "arc_client/fact"
 require "arc_client/error"
 require "arc_client/user"
-require 'arc_client/pki_token'
+require 'arc_client/agent_install'
 
 require 'rest-client'
 require 'uri'
@@ -347,18 +347,18 @@ module ArcClient
     # PKI
     #
 
-    def create_pki_token(token, common_name, options = {})
-      generate_pki_token(token, common_name, options)
+    def agent_init(token, common_name, options = {})
+      agent_installation(token, common_name, options)
     rescue => e
       $stderr.puts "Arc-Client: caught exception creating pki token: #{e}"
       return nil
     end
 
-    def create_pki_token!(token, common_name, options = {})
+    def agent_init!(token, common_name, options = {})
       if token == nil || token == ''
         raise ArcClient::ArgumentError, "Arc-Client: caught exception creating a pki token. Parameter token is empty"
       end
-      generate_pki_token(token, common_name, options)
+      agent_installation(token, common_name, options)
     rescue => e
       if ApiError.data_processable?(e)
         raise ApiError.new(e.response), e.message
@@ -374,17 +374,17 @@ module ArcClient
 
     private
 
-    def generate_pki_token(token, common_name, options={})
+    def agent_installation(token, common_name, options={})
       body = ""
       if !common_name.nil? || !common_name.empty?
         body = "{\"CN\": \"#{common_name}\"}"
       end
 
-      response = api_request('post', URI::join(@api_server_url, 'pki/token').to_s, token, body, options)
+      response = api_request('post', URI::join(@api_server_url, 'agents/init').to_s, token, body, options)
 
       # create object if response is JSON
       begin
-        PkiToken.new(JSON.parse(response))
+        AgentInstall.new(JSON.parse(response))
       rescue
         return response.body
       end
