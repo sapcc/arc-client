@@ -5,6 +5,7 @@ require 'uri'
 describe ArcClient do
   let(:token) { ENV['ARC_AUTH_TOKEN'] }           # e.g. 4a912b3274ce487790f86c73f4f59fd1
   let(:api_server_url) { ENV['ARC_API_SERVER_URL'] }  # e.g. https://arc-app
+  let(:auth_headers) { {"X-Identity-Status" => "Confirmed", "X-Project-Id" => "test-project-id", "X-Project-Domain-Id" => "test-project-domain-id"} }  # e.g.
 
   it 'has a version number' do
     expect(ArcClient::VERSION).not_to be nil
@@ -284,6 +285,8 @@ describe ArcClient do
 
         # get the tags
         new_tags = @client.show_agent_tags!(token, agent_id)
+        expect(new_tags.to_h.keys.length).to be == 2
+
         tags.each do |key, value|
           expect(new_tags.send(key.to_s)).to be == value
         end
@@ -308,6 +311,8 @@ describe ArcClient do
 
         # get the tags
         new_tags = @client.show_agent_tags!(token, agent_id)
+        expect(new_tags.to_h.keys.length).to be == 2
+
         tags.each do |key, value|
           expect(new_tags.send(key.to_s)).to be == value
         end
