@@ -395,17 +395,8 @@ module ArcClient
       Tags.new(JSON.parse(response))
     end
 
-    def add_tags_to_agent(token, agent_id, tags)
-      tags_string = ''
-      unless tags.empty?
-        tags.each_with_index do |(key, value), index|
-          tags_string << "#{key}=#{value}"
-          if index < (tags.count - 1)
-            tags_string << "&"
-          end
-        end
-      end
-      api_request('post', URI::join(@api_server_url, 'agents/', agent_id + '/', 'tags').to_s, token, tags_string, {})
+    def add_tags_to_agent(token, agent_id, tags = {})
+      api_request('post', URI::join(@api_server_url, 'agents/', agent_id + '/', 'tags').to_s, token, tags.to_json, {})
     end
 
     def remove_tag_from_agent(token, agent_id, key)
